@@ -1,0 +1,16 @@
+{
+  "name": "FrameStack PDF",
+  "id": "1638543298157640831",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "permissions": ["currentuser"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://cdnjs.cloudflare.com",
+      "https://cdn.jsdelivr.net"
+    ]
+  },
+  "documentAccess": "dynamic-page"
+}

@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrameStack PDF</title>
+  
+  <!-- Salkom Design Studio Certified Vendor Assets -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  
+  <!-- Fonts via jsDelivr (already in manifest allowedDomains — no CSP violation) -->
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/400.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/500.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/600.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/700.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.18/500.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.18/700.min.css" rel="stylesheet">
+
+  <!-- Patch: set willReadFrequently on all 2d canvas contexts BEFORE jsPDF loads.
+       This silences the Canvas2D readback performance warning that jsPDF triggers
+       internally when it calls getImageData() during image processing. -->
+  <script>
+    (function () {
+      var _orig = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+        if (type === "2d") {
+          attrs = Object.assign({ willReadFrequently: true }, attrs || {});
+        }
+        return _orig.call(this, type, attrs);
+      };
+    })();
+  </script>
+
+  <!-- Core Figma Dynamic-Page jsPDF Loader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* ========================================================================
+       PREMIUM SALKOM DESIGN STUDIO STYLE TOKEN SYSTEM
+       ======================================================================== */
+    :root {
+      --color-brand: #0014D1;
+      --color-brand-hover: #000F9F;
+      --color-brand-light: rgba(0, 20, 209, 0.04);
+      --color-brand-border: rgba(0, 20, 209, 0.12);
+      --color-brand-gradient: linear-gradient(135deg, #0014D1 0%, #000F9F 100%);
+      
+      --color-bg-base: #F8FAFC; /* Slate 50 background */
+      --color-bg-white: #FFFFFF;
+      --color-border: #E2E8F0; /* Slate 200 */
+      --color-border-hover: rgba(0, 20, 209, 0.25);
+      
+      --color-text-title: #090D1A; /* Luxurious ink deep navy-black */
+      --color-text-body: #475569;  /* Elegant, soft Slate 600 */
+      --color-text-muted: #64748B; /* Slate 500 */
+      --color-text-light: #94A3B8; /* Slate 400 */
+      
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.04);
+    }
+
+    /* ── Dark Mode Token Overrides ── */
+    body.dark-theme {
+      --color-bg-base: #090D1A; /* Deep sapphire obsidian */
+      --color-bg-white: #121B2E; /* Rich deep navy */
+      --color-border: #1E293B; /* Crisp border slate */
+      --color-border-hover: rgba(0, 20, 209, 0.4);
+      
+      --color-text-title: #F8FAFC; /* Slate 50 */
+      --color-text-body: #E2E8F0;  /* Slate 200 */
+      --color-text-muted: #94A3B8; /* Slate 400 */
+      --color-text-light: #64748B; /* Slate 500 */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-bg-base);
+      color: var(--color-text-body);
+      user-select: none;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ── High-Contrast Header Elements ── */
+    header {
+      background-color: var(--color-bg-white);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 24px;
+      flex-shrink: 0;
+      z-index: 40;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.01);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* Workspace Slide Tabs */
+    .workspace-tabs {
+      display: flex;
+      background-color: var(--color-bg-white);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 24px;
+      gap: 26px; /* expanded spacing gap */
+      flex-shrink: 0;
+      z-index: 35;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2.5px solid transparent; /* slightly thicker premium indicator */
+      padding: 12px 2px; /* comfortable touch target */
+      font-size: 12px; /* slightly increased crisp size */
+      font-weight: 600;
+      color: var(--color-text-muted);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: -0.01em;
+    }
+    
+    .tab-btn:hover {
+      color: var(--color-text-title);
+    }
+    
+    .tab-btn.active {
+      color: var(--color-text-title); /* anchor active text dark slate */
+      border-bottom-color: var(--color-brand);
+      font-weight: 700;
+    }
+
+    /* ── Unified Layout Geometry (No Sides, Grid Hierarchy) ── */
+    .unified-workspace {
+      height: calc(100vh - 56px - 38px - 58px);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+      flex-grow: 1;
+    }
+
+    /* Tab panels */
+    .tab-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* Top dashboard config card */
+    .config-card {
+      background-color: var(--color-bg-white);
+      border-bottom: 1px solid var(--color-border);
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex-shrink: 0;
+      z-index: 30;
+      box-shadow: 0 4px 20px -10px rgba(15, 23, 42, 0.04);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* Scrollable List feed */
+    .feed-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      background-color: var(--color-bg-base);
+      padding: 18px 24px;
+      transition: background-color 0.2s ease;
+    }
+
+    .action-footer {
+      background-color: var(--color-bg-white);
+      border-top: 1px solid var(--color-border);
+      height: 64px; /* expanded vertical breathing room to prevent overlap */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      flex-shrink: 0;
+      z-index: 20;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* Form control dark mode overrides */
+    body.dark-theme input.form-control,
+    body.dark-theme select.form-select {
+      background-color: #0F172A;
+      border-color: #334155;
+      color: #F8FAFC;
+    }
+    
+    body.dark-theme input.form-control:focus,
+    body.dark-theme select.form-select:focus {
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 2px var(--color-brand-light);
+    }
+
+    /* ── Custom Styled Form Elements ── */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      background: #E2E8F0;
+      border-radius: 8px;
+      outline: none;
+    }
+    body.dark-theme input[type="range"] {
+      background: #334155;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--color-brand);
+      cursor: pointer;
+      border: 2.5px solid var(--color-bg-white);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      transition: transform 0.1s ease, background-color 0.1s ease;
+    }
+    body.dark-theme input[type="range"]::-webkit-slider-thumb {
+      border-color: #1E293B;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background-color: var(--color-brand-hover);
+    }
+
+    /* Independent Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 8px;
+    }
+    body.dark-theme ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    /* Horizontal presets scrolling chips */
+    .presets-horizontal-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px; /* expanded spacing gap */
+      overflow-x: auto;
+      padding: 4px 2px 10px 2px; /* vertical padding to prevent chip shadow clipping */
+      scrollbar-width: thin;
+    }
+
+    .presets-horizontal-bar::-webkit-scrollbar {
+      height: 4px;
+    }
+    
+    .presets-horizontal-bar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .presets-horizontal-bar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 10px;
+    }
+    
+    body.dark-theme .presets-horizontal-bar::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+
+    .preset-chip {
+      background-color: #F8FAFC;
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+    body.dark-theme .preset-chip {
+      background-color: #0F172A;
+    }
+
+    .preset-chip span {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-text-body);
+      transition: color 0.15s ease;
+    }
+
+    .preset-chip:hover {
+      border-color: var(--color-border-hover);
+      background-color: var(--color-bg-white);
+      box-shadow: 0 4px 12px rgba(0, 20, 209, 0.03);
+      transform: translateY(-1px); /* delightful visual micro-lift */
+    }
+    body.dark-theme .preset-chip:hover {
+      background-color: var(--color-bg-white);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .preset-chip.active {
+      border-color: var(--color-brand);
+      background-color: var(--color-brand-light);
+      box-shadow: 0 0 0 1px var(--color-brand), 0 4px 12px rgba(0, 20, 209, 0.05);
+    }
+
+    .preset-chip.active span {
+      color: var(--color-brand);
+      font-weight: 600;
+    }
+
+    .preset-chip i {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      transition: color 0.15s ease;
+    }
+
+    .preset-chip.active i {
+      color: var(--color-brand);
+    }
+
+    /* Page size buttons row */
+    .size-btn-group {
+      display: flex;
+      background-color: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    body.dark-theme .size-btn-group {
+      background-color: #0F172A;
+      border-color: #334155;
+    }
+
+    .size-tab-btn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-grow: 1;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .size-tab-btn.active {
+      background-color: var(--color-bg-white);
+      color: var(--color-text-title);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .size-tab-btn:hover {
+      color: var(--color-text-title);
+    }
+
+    /* ── Segmented Compression controller ── */
+    .comp-segmented-bar {
+      background-color: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 3px;
+      display: flex;
+      justify-content: space-between;
+      gap: 2px;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    body.dark-theme .comp-segmented-bar {
+      background-color: #0F172A;
+      border-color: #334155;
+    }
+
+    .comp-btn {
+      background-color: transparent;
+      border: none;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 6px;
+      padding: 6px 0;
+      flex-grow: 1;
+      text-align: center;
+      line-height: 1.2;
+      font-size: 11px;
+    }
+
+    .comp-btn.active {
+      background-color: var(--color-bg-white);
+      color: var(--color-text-title);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .comp-btn:hover {
+      color: var(--color-text-title);
+    }
+
+    /* ── Full Width Frame List rows ── */
+    #frames-scroll-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px; /* Elegant, premium designer card spacing gap */
+    }
+
+    .frame-card-wrapper {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      background-color: var(--color-bg-white);
+      overflow: hidden;
+      box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Export History List Cards styling */
+    .history-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px; /* elegant upscaled breathing padding */
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      background-color: var(--color-bg-white);
+      box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .history-card:hover {
+      border-color: #CBD5E1;
+      transform: translateY(-1.5px); /* responsive interactive hover lift */
+      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+    }
+    
+    body.dark-theme .history-card:hover {
+      border-color: #475569;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Redownload Button styling */
+    .btn-redownload-pdf {
+      cursor: pointer;
+      border: 1px solid var(--color-border);
+      background-color: var(--color-bg-base);
+      color: var(--color-text-body);
+      border-radius: 8px;
+      transition: all 0.15s ease;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+    }
+    .btn-redownload-pdf:hover {
+      color: var(--color-brand) !important;
+      border-color: var(--color-brand) !important;
+      background-color: var(--color-brand-light) !important;
+    }
+    
+    .frame-card-wrapper:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+      transform: translateY(-1.5px); /* elegant soft hover lift */
+    }
+    body.dark-theme .frame-card-wrapper:hover {
+      border-color: #475569;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .frame-card {
+      padding: 14px 18px; /* upscale spacing and breathing room */
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      position: relative;
+      background-color: transparent;
+    }
+
+    .frame-card-wrapper.selected {
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 1px var(--color-brand), 0 2px 8px -2px rgba(0, 20, 209, 0.06);
+    }
+
+    .frame-card-wrapper.selected .frame-card {
+      background-color: var(--color-brand-light);
+    }
+
+    /* Drag states */
+    .frame-card-wrapper.dragging {
+      opacity: 0.4;
+      transform: scale(0.985);
+      border-color: var(--color-brand) !important;
+      box-shadow: var(--shadow-md);
+    }
+
+    .frame-card-wrapper.drag-over {
+      border-color: var(--color-brand) !important;
+      box-shadow: 0 0 12px rgba(0, 20, 209, 0.08);
+    }
+
+    /* Drag grip handles */
+    .drag-handle {
+      color: var(--color-text-light);
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      padding: 6px;
+      font-size: 14px;
+      transition: color 0.15s ease;
+    }
+    .drag-handle:hover {
+      color: var(--color-text-muted);
+    }
+
+    /* Config gear cog */
+    .card-settings-trigger {
+      color: var(--color-text-light);
+      cursor: pointer;
+      padding: 6px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    .card-settings-trigger:hover {
+      color: var(--color-brand);
+      transform: rotate(30deg);
+    }
+
+    /* Settings override drawer */
+    .override-drawer {
+      border-top: 1px dashed var(--color-border);
+      background-color: var(--color-bg-base);
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    @keyframes slideDown {
+      from { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
+      to { opacity: 1; max-height: 180px; }
+    }
+
+    /* Modern active checkboxes */
+    .custom-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 4px;
+      background-color: var(--color-bg-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    body.dark-theme .custom-checkbox {
+      background-color: #0F172A;
+      border-color: #475569;
+    }
+
+    .frame-card-wrapper.selected .custom-checkbox {
+      background-color: var(--color-brand);
+      border-color: var(--color-brand);
+      color: white;
+    }
+
+    .custom-checkbox i {
+      font-size: 10px;
+      display: none;
+    }
+
+    .frame-card-wrapper.selected .custom-checkbox i {
+      display: block;
+    }
+
+    /* Thumbnail box */
+    .thumb-wrapper {
+      width: 72px;
+      height: 54px;
+      border-radius: 6px;
+      background-color: #F8FAFC;
+      border: 1px solid var(--color-border);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+    body.dark-theme .thumb-wrapper {
+      background-color: #0F172A;
+    }
+
+    .thumb-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .order-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 18px;
+      height: 18px;
+      background: var(--color-brand-gradient);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 20, 209, 0.2);
+      border: 1.5px solid var(--color-bg-white);
+    }
+    body.dark-theme .order-badge {
+      border-color: #1E293B;
+    }
+
+    /* ── Glassmorphic overlay progress staging ── */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background-color: var(--color-bg-white);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Spinner animation */
+    .spinner-ring {
+      width: 40px;
+      height: 40px;
+      border: 3.5px solid var(--color-bg-base);
+      border-top-color: var(--color-brand);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Toast notification floaters */
+    .toast-container {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 100;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .custom-toast {
+      background-color: var(--color-bg-white);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow-lg);
+      font-size: 11px;
+      font-weight: 500;
+      pointer-events: auto;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .custom-toast.success {
+      background-color: #F0FDF4;
+      border-color: #BBF7D0;
+      color: #166534;
+    }
+    body.dark-theme .custom-toast.success {
+      background-color: #052e16;
+      border-color: #15803d;
+      color: #86efac;
+    }
+
+    .custom-toast.error {
+      background-color: #FEF2F2;
+      border-color: #FCA5A5;
+      color: #991B1B;
+    }
+    body.dark-theme .custom-toast.error {
+      background-color: #450a0a;
+      border-color: #b91c1c;
+      color: #fca5a5;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-16px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Utilities */
+    .text-brand { color: var(--color-brand) !important; }
+    .bg-brand { background-color: var(--color-brand) !important; }
+    .bg-brand-light { background-color: var(--color-brand-light) !important; }
+    
+    .text-zinc-800 { color: var(--color-text-title) !important; }
+    .text-zinc-500 { color: var(--color-text-body) !important; }
+    .text-zinc-400 { color: var(--color-text-muted) !important; }
+    
+    .font-mono { font-family: var(--font-mono) !important; }
+    .text-xs { font-size: 11px !important; }
+    .font-bold { font-weight: 700 !important; }
+    .font-semibold { font-weight: 600 !important; }
+
+    /* Dynamic high-contrast pill styling tags */
+    .bg-emerald-50 {
+      background-color: #ECFDF5 !important;
+      color: #059669 !important;
+      border-color: #A7F3D0 !important;
+    }
+    body.dark-theme .bg-emerald-50 {
+      background-color: rgba(6, 78, 59, 0.3) !important;
+      color: #34D399 !important;
+      border-color: rgba(52, 211, 153, 0.2) !important;
+    }
+    .bg-slate-100 {
+      background-color: #F1F5F9 !important;
+      color: #475569 !important;
+      border-color: #E2E8F0 !important;
+    }
+    body.dark-theme .bg-slate-100 {
+      background-color: #090D1A !important;
+      color: #94A3B8 !important;
+      border-color: #1E293B !important;
+    }
+
+    /* Elite typography color highlights */
+    .section-label {
+      font-size: 10.5px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.06em !important; /* expanded elegance */
+      text-transform: uppercase !important;
+      color: var(--color-text-muted) !important;
+      display: flex;
+      align-items: center;
+      gap: 6.5px;
+    }
+    
+    .section-label::before {
+      content: "";
+      display: inline-block;
+      width: 3px;
+      height: 10px; /* slightly taller prefix */
+      background: var(--color-brand-gradient);
+      border-radius: 4px; /* rounder */
+      flex-shrink: 0;
+    }
+
+    .frame-card-wrapper.selected .fw-bold.text-zinc-800 {
+      color: var(--color-brand) !important;
+      transition: color 0.15s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Live Toast Banner Floating System -->
+  <div id="toast-root" class="toast-container"></div>
+
+  <!-- Master SaaS App Header -->
+  <header>
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center justify-content-center rounded-2 bg-brand text-white shadow-sm" style="width: 28px; height: 28px; background: var(--color-brand-gradient) !important; box-shadow: 0 4px 10px rgba(0, 20, 209, 0.15) !important;">
+          <i class="ri-file-pdf-2-fill" style="font-size: 14px;"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-1.5 leading-none">
+            <h1 class="font-bold text-zinc-800 m-0" style="font-size: 14px; line-height: 1;">FrameStack PDF</h1>
+            <span class="bg-brand-light text-brand border border-brand-border px-1.5 py-0.5 rounded-pill uppercase tracking-wider font-bold" style="font-size: 7px; line-height: 1;">SaaS</span>
+          </div>
+          <div class="d-flex align-items-center gap-1 text-zinc-400 mt-0.5" style="font-size: 10px;">
+            <i class="ri-team-line" style="font-size: 10.5px;"></i>
+            <span>Salkom Design Studio</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <!-- Gorgeous Light/Dark Mode Sliding Toggle -->
+        <button id="btn-theme-toggle" class="btn btn-link text-zinc-400 hover:text-zinc-700 p-1 rounded-2 text-decoration-none me-1" title="Toggle Dark/Light Mode" style="outline: none;">
+          <i class="ri-moon-clear-line" style="font-size: 15px;"></i>
+        </button>
+        
+        <div class="d-flex align-items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200/50 px-2.5 py-1 rounded-2 font-semibold" style="font-size: 10px;">
+          <i class="ri-cloud-line"></i>
+          <span>Cloud Sync</span>
+        </div>
+        <button id="btn-close-plugin" class="btn btn-link text-zinc-400 hover:text-zinc-700 p-1 rounded-2 text-decoration-none">
+          <i class="ri-close-line font-bold" style="font-size: 15px;"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Workspace Sub-tabs selector bar -->
+  <div class="workspace-tabs">
+    <button id="tab-btn-configure" class="tab-btn active" onclick="switchTab('configure')">
+      <i class="ri-settings-4-line"></i>
+      <span>Configure & Organize</span>
+    </button>
+    <button id="tab-btn-document" class="tab-btn" onclick="switchTab('document')">
+      <i class="ri-file-edit-line"></i>
+      <span>Document & Cover</span>
+    </button>
+    <button id="tab-btn-history" class="tab-btn" onclick="switchTab('history')">
+      <i class="ri-history-line"></i>
+      <span>Export History</span>
+    </button>
+  </div>
+
+  <!-- Unified Workspace Feed (Single full-width view) -->
+  <div class="unified-workspace">
+    
+    <!-- PANEL A: Configure & Sequence list -->
+    <div id="panel-configure" class="tab-panel">
+      <!-- Top config card dashboard panel -->
+      <div class="config-card">
+        <!-- Preset Chips Horizontal row -->
+        <div class="d-flex flex-column gap-2">
+          <label class="section-label">Export Template Presets</label>
+          <div class="presets-horizontal-bar" id="presets-list-container">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Config options grids -->
+        <div class="row g-3">
+          <!-- Page size selector -->
+          <div class="col-6 d-flex flex-column gap-2">
+            <label class="section-label">Page Sizes</label>
+            <div class="size-btn-group" id="sizes-grid-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Compression pill segmented selector -->
+          <div class="col-6 d-flex flex-column gap-2">
+            <label class="section-label">
+              <span>Enterprise Compression</span>
+              <i class="ri-zap-fill text-brand" style="font-size: 10px; margin-left: 2px;"></i>
+            </label>
+            <div class="comp-segmented-bar" id="compression-pills-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 align-items-center">
+          <!-- Spacing slider range -->
+          <div class="col-6 d-flex flex-column gap-1">
+            <div class="d-flex align-items-center justify-content-between">
+              <label class="section-label">Layout Margins</label>
+              <span id="lbl-margin-value" class="text-brand font-bold font-mono bg-brand-light px-2 py-0.5 rounded" style="font-size: 10px; line-height: 1;">10 mm</span>
+            </div>
+            <input type="range" id="input-margin-slider" min="0" max="32" step="2" value="10" class="form-range mt-1.5">
+          </div>
+
+          <!-- Estimator saving statistics -->
+          <div class="col-6">
+            <div id="box-savings-estimation" class="border p-3 rounded-3 d-flex flex-column gap-2" style="background-color: #F8FAFC; border-color: var(--color-border) !important; min-height: 48px;">
+              <div class="d-flex align-items-center justify-content-between" style="font-size: 11.5px;">
+                <span class="text-zinc-400 d-flex align-items-center gap-1.5">
+                  <i class="ri-database-2-line" style="font-size: 13px;"></i>
+                  <span>Est. PDF Size</span>
+                </span>
+                <span id="txt-bytes-estimate" class="font-bold text-zinc-800 font-mono" style="font-size: 12.5px;">0 KB → 0 KB</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-between" style="font-size: 11.5px;">
+                <span class="text-zinc-400 d-flex align-items-center gap-1.5">
+                  <i class="ri-scissors-cut-line" style="font-size: 13px;"></i>
+                  <span>Size Reduction</span>
+                </span>
+                <span id="txt-reduction-saving" class="font-bold text-emerald-600 font-mono bg-emerald-50 px-2.5 py-0.5 rounded-pill border border-emerald-100/50" style="font-size: 11px;">0% Saved</span>
+              </div>
+              <div class="border-top my-1.5" style="border-color: var(--color-border) !important;"></div>
+              <div class="text-center text-zinc-400 font-medium" style="font-size: 9.5px; font-style: italic; line-height: 1.2;">
+                *Estimated only. Size may vary upon final PDF export.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom visual frames sequence list (Scroll container) -->
+      <div class="feed-container">
+        <!-- Secondary Selection Manager Bar -->
+        <div class="px-2 py-1 bg-transparent d-flex align-items-center justify-content-between text-xs mb-2.5">
+          <button id="btn-select-all-toggle" class="btn btn-link p-0 text-decoration-none text-brand font-bold text-xs" style="font-size: 12px; font-weight: 600;">
+            Select All
+          </button>
+          <span id="txt-selection-summary" class="text-zinc-400 font-semibold" style="font-size: 12px; font-weight: 500;">0 of 0 selected</span>
+        </div>
+
+        <div id="frames-scroll-container">
+          <!-- Renders Frame cards dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL B: Document properties, Title & Cover builder -->
+    <div id="panel-document" class="tab-panel d-none">
+      <div class="feed-container">
+        <!-- Cover Page Creator Block -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="background-color: var(--color-bg-white); border-radius: 12px;">
+          <div class="form-check form-switch mb-3 p-0 d-flex align-items-center justify-content-between">
+            <label class="section-label m-0" for="toggle-cover-page">Include Cover Page Builder</label>
+            <input class="form-check-input m-0 cursor-pointer" type="checkbox" id="toggle-cover-page" style="width: 38px; height: 20px;">
+          </div>
+          
+          <div id="cover-builder-controls" class="d-none mt-3">
+            <div class="mb-3">
+              <label class="text-uppercase text-zinc-400 font-bold mb-1.5" style="font-size: 9.5px; letter-spacing: 0.05em;">Cover Title</label>
+              <input type="text" id="cover-title" class="form-control font-semibold" style="font-size: 12px;" value="FrameStack Export Delivery">
+            </div>
+            <div class="mb-3">
+              <label class="text-uppercase text-zinc-400 font-bold mb-1.5" style="font-size: 9.5px; letter-spacing: 0.05em;">Cover Subtitle</label>
+              <input type="text" id="cover-subtitle" class="form-control" style="font-size: 12px;" value="Interactive mockup presentation and layout specs">
+            </div>
+            <div>
+              <label class="text-uppercase text-zinc-400 font-bold mb-1.5" style="font-size: 9.5px; letter-spacing: 0.05em;">Design Layout Theme</label>
+              <select id="cover-theme" class="form-select font-semibold" style="font-size: 12px;">
+                <option value="minimal" selected>Salkom Blue Minimal</option>
+                <option value="bold">Bold Corporate Black</option>
+                <option value="stripe">Emerald Accent Stripe</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Document Metadata editor block -->
+        <div class="card border-0 shadow-sm p-4" style="background-color: var(--color-bg-white); border-radius: 12px;">
+          <label class="section-label mb-3">PDF Document Properties Metadata</label>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="text-uppercase text-zinc-400 font-bold mb-1.5" style="font-size: 9.5px; letter-spacing: 0.05em;">Document Title</label>
+              <input type="text" id="meta-title" class="form-control" style="font-size: 12px;" value="Mockup Specs Delivery">
+            </div>
+            <div class="col-6">
+              <label class="text-uppercase text-zinc-400 font-bold mb-1.5" style="font-size: 9.5px; letter-spacing: 0.05em;">Author Name</label>
+              <input type="text" id="meta-author" class="form-control" style="font-size: 12px;" value="Salkom Design Studio">
+            </div>
+            <div class="col-6">
+              <label class="text-uppercase text-zinc-400 font-bold mb-1.5" style="font-size: 9.5px; letter-spacing: 0.05em;">Subject Description</label>
+              <input type="text" id="meta-subject" class="form-control" style="font-size: 12px;" value="Figma design delivery specs">
+            </div>
+            <div class="col-6">
+              <label class="text-uppercase text-zinc-400 font-bold mb-1.5" style="font-size: 9.5px; letter-spacing: 0.05em;">Keywords (Comma Spaced)</label>
+              <input type="text" id="meta-keywords" class="form-control" style="font-size: 12px;" value="figma, pdf, framestack, salkom, specs">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL C: Export History Logs -->
+    <div id="panel-history" class="tab-panel d-none">
+      <div class="feed-container">
+        <div class="card border-0 shadow-sm p-4" style="background-color: var(--color-bg-white); border-radius: 12px; min-height: 280px;">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <label class="section-label m-0">Export Activity History</label>
+            <button id="btn-clear-history" class="btn btn-sm btn-outline-danger border-0 font-semibold" style="font-size: 10px;">
+              <i class="ri-delete-bin-line"></i> Clear Logs
+            </button>
+          </div>
+          
+          <div id="history-empty-state" class="d-flex flex-column align-items-center justify-content-center py-5 text-center text-zinc-500 gap-3">
+            <div class="h-11 w-11 rounded-full bg-slate-50 border d-flex align-items-center justify-content-center text-zinc-400 shadow-sm" style="width: 44px; height: 44px;">
+              <i class="ri-history-line" style="font-size: 16px;"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-xs text-zinc-800 mb-1">No past exports logged</h3>
+              <p class="text-zinc-400 m-0 leading-normal" style="font-size: 11px; max-width: 200px;">
+                Your successful compiled PDF saves will be logged here with sizing ratios and times.
+              </p>
+            </div>
+          </div>
+
+          <div id="history-log-list" class="d-flex flex-column gap-3 d-none">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Master Footer with responsive Action triggers -->
+  <footer class="action-footer">
+    <div class="d-flex flex-column leading-none">
+      <span class="text-uppercase text-zinc-400 font-bold tracking-wider leading-none" style="font-size: 9px; line-height: 1; letter-spacing: 0.05em;">Selected Payload</span>
+      <span id="lbl-footer-count" class="font-bold text-brand font-mono leading-none mt-1" style="font-size: 13px;">0 / 0 Selected</span>
+    </div>
+    <button id="btn-export-pdf" class="btn bg-brand text-white border-0 font-bold px-4 py-2 rounded-xl d-flex align-items-center gap-1.5 shadow-sm" style="font-size: 12px; font-weight: 600; height: 38px; transition: all 0.15s ease; background: var(--color-brand-gradient) !important;" disabled>
+      <i class="ri-download-2-line"></i>
+      <span>Compile PDF Export</span>
+    </button>
+  </footer>
+
+  <!-- Modal Queue progress overlay loader -->
+  <div id="modal-queue-overlay" class="modal-overlay">
+    <div class="modal-card shadow-lg">
+      <div class="relative d-flex align-items-center justify-content-center">
+        <div class="spinner-ring"></div>
+        <div id="txt-overlay-percent" class="position-absolute font-mono font-bold text-zinc-800" style="font-size: 10px; transform: translateY(1px);">0%</div>
+      </div>
+      <div class="d-flex flex-column gap-1 w-100">
+        <h3 class="font-bold text-zinc-800 m-0" style="font-size: 13px;">Compiling PDF Export</h3>
+        <p id="txt-overlay-staging" class="text-zinc-400 leading-normal truncate px-2 m-0 mt-0.5" style="font-size: 11px;">Staging assets...</p>
+        <span class="text-brand font-bold uppercase mt-1.5" style="font-size: 8.5px; letter-spacing: 0.02em;">Enterprise Compression Staging</span>
+      </div>
+      <div class="w-100 d-flex flex-column gap-1">
+        <div class="w-100 h-1.5 bg-slate-100 border rounded-full overflow-hidden" style="height: 6px; border-color: var(--color-border) !important;">
+          <div id="fill-overlay-bar" class="h-full bg-brand rounded-full transition-all duration-300 ease-out" style="width: 0%; background: var(--color-brand-gradient) !important;"></div>
+        </div>
+        <div class="d-flex justify-content-between text-zinc-400 font-mono" style="font-size: 8px;">
+          <span>Staging Assets</span>
+          <span>PDF Ready</span>
+        </div>
+      </div>
+      <button id="btn-cancel-export" class="w-100 btn bg-white border hover:bg-zinc-50 text-zinc-500 font-bold rounded-xl py-2 d-flex align-items-center justify-content-center gap-1.5 transition-colors" style="font-size: 10px; height: 34px; border-color: var(--color-border) !important;">
+        <i class="ri-close-circle-line"></i>
+        <span>Cancel Export Session</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       UI APP CLIENT LOGIC ENGINE (Vanilla JavaScript)
+       ========================================================================== -->
+  <script>
+    // ── Application Unified State ──
+    const state = {
+      allFrames: [],         // loaded frames from figma
+      orderedIds: [],        // drag-and-drop page mapping index
+      selectedIds: new Set(),// selection tracking IDs
+      searchQuery: "",       // name filter
+      sizeMode: "original",   // original | a4 | letter
+      compressionMode: "average", // none | low | average | high
+      padding: 10,           // layout border padding
+      activePresetId: "",    // template preset active ID
+      
+      // Settings overrides per frame mapping: { [frameId]: { sizeMode: "inherit" | "original" | "a4" | "letter", padding: 10, bleed: false } }
+      frameOverrides: {},
+      expandedOverrideId: null, // frameId currently showing the settings drawer
+      
+      exportState: {
+        isExporting: false,
+        exportQueue: [],
+        currentIndex: 0,
+        progress: 0,
+        totalBytes: 0
+      }
+    };
+
+    // ── Template configurations metadata ──
+    const presets = [
+      {
+        id: "ux-case-study",
+        name: "UX Case Study",
+        description: "Portfolio layout. Original ratios, zero margins.",
+        sizeMode: "original",
+        compressionMode: "average",
+        padding: 0,
+        icon: "ri-file-text-line"
+      },
+      {
+        id: "behance-slides",
+        name: "Behance Slides",
+        description: "A4 sheet size with balanced compression speeds.",
+        sizeMode: "a4",
+        compressionMode: "high",
+        padding: 10,
+        icon: "ri-compass-3-line"
+      },
+      {
+        id: "client-review",
+        name: "Client Review PDF",
+        description: "US Letter margins with crisp retina JPEG quality.",
+        sizeMode: "letter",
+        compressionMode: "low",
+        padding: 12,
+        icon: "ri-checkbox-circle-line"
+      },
+      {
+        id: "dev-handoff",
+        name: "Developer Handoff",
+        description: "Original canvas scales. Lossless uncompressed pages.",
+        sizeMode: "original",
+        compressionMode: "none",
+        padding: 0,
+        icon: "ri-code-line"
+      }
+    ];
+
+    const sizeOptions = [
+      { value: "original", label: "Original" },
+      { value: "a4", label: "A4 Page" },
+      { value: "letter", label: "US Letter" }
+    ];
+
+    const compressionOptions = [
+      { value: "none", label: "Lossless" },
+      { value: "low", label: "Low" },
+      { value: "average", label: "Balanced" },
+      { value: "high", label: "Maximum" }
+    ];
+
+    // ── jsPDF Reference Pointer ──
+    let pdfInstance = null;
+
+    // ── Floating Toast Manager ──
+    function showToast(message, type = "info") {
+      const toastRoot = document.getElementById("toast-root");
+      const toast = document.createElement("div");
+      toast.className = `custom-toast ${type}`;
+      
+      const icon = type === "success" 
+        ? '<i class="ri-checkbox-circle-fill text-emerald-500"></i>' 
+        : type === "error" 
+        ? '<i class="ri-error-warning-fill text-rose-500"></i>' 
+        : '<i class="ri-info-card-fill text-brand"></i>';
+
+      toast.innerHTML = `
+        ${icon}
+        <div class="flex-grow-1 leading-normal">${message}</div>
+        <button class="btn btn-link text-zinc-400 hover:text-zinc-600 p-0 text-decoration-none border-0" onclick="this.parentElement.remove()">
+          <i class="ri-close-line"></i>
+        </button>
+      `;
+
+      toastRoot.appendChild(toast);
+      setTimeout(() => {
+        toast.style.animation = "slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards";
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ── Bytes format calculator ──
+    function formatBytes(b) {
+      if (b === 0) return "0 Bytes";
+      const k = 1024;
+      const sizes = ["Bytes", "KB", "MB"];
+      const i = Math.floor(Math.log(b) / Math.log(k));
+      return parseFloat((b / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+    }
+
+    // Helper: Convert PNG Base64 to JPEG at custom compression quality
+    function pngBase64ToJpeg(pngBase64, quality) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Canvas 2D context acquisition failed."));
+            return;
+          }
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = () => reject(new Error("Image data decoding failed."));
+        img.src = "data:image/png;base64," + pngBase64;
+      });
+    }
+
+    // Sum estimated input sizes
+    function getSelectionRawBytes() {
+      let bytes = 0;
+      state.orderedIds.forEach(id => {
+        if (state.selectedIds.has(id)) {
+          const frame = state.allFrames.find(f => f.id === id);
+          if (frame && frame.thumbnailBinary) {
+            bytes += frame.thumbnailBinary.length;
+          }
+        }
+      });
+      return bytes;
+    }
+
+    // ── Tab Management ──
+    function switchTab(tabId) {
+      // Toggle tabs highlight
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(`tab-btn-${tabId}`).classList.add("active");
+
+      // Toggle views
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("d-none"));
+      document.getElementById(`panel-${tabId}`).classList.remove("d-none");
+      
+      if (tabId === "history") {
+        renderHistory();
+      }
+    }
+
+    // ── HTML DOM Component Renderers ──
+
+    // Render presets chips horizontal
+    function renderPresets() {
+      const container = document.getElementById("presets-list-container");
+      container.innerHTML = "";
+      
+      presets.forEach(preset => {
+        const isActive = state.activePresetId === preset.id;
+        const chip = document.createElement("div");
+        chip.className = `preset-chip ${isActive ? "active" : ""}`;
+        chip.innerHTML = `
+          <i class="${preset.icon}"></i>
+          <span>${preset.name}</span>
+        `;
+        
+        chip.onclick = () => {
+          state.sizeMode = preset.sizeMode;
+          state.compressionMode = preset.compressionMode;
+          state.padding = preset.padding;
+          state.activePresetId = preset.id;
+          
+          updateUIState();
+        };
+        container.appendChild(chip);
+      });
+    }
+
+    // Render page dimensions tabs
+    function renderDimensions() {
+      const container = document.getElementById("sizes-grid-container");
+      container.innerHTML = "";
+
+      sizeOptions.forEach(opt => {
+        const isActive = state.sizeMode === opt.value;
+        const btn = document.createElement("button");
+        btn.className = `size-tab-btn ${isActive ? "active" : ""}`;
+        btn.textContent = opt.label;
+
+        btn.onclick = () => {
+          state.sizeMode = opt.value;
+          state.activePresetId = ""; // break preset linkage
+          updateUIState();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // Render compression pill segments
+    function renderCompression() {
+      const container = document.getElementById("compression-pills-container");
+      container.innerHTML = "";
+
+      compressionOptions.forEach(opt => {
+        const isActive = state.compressionMode === opt.value;
+        const btn = document.createElement("button");
+        btn.className = `comp-btn ${isActive ? "active" : ""}`;
+        btn.textContent = opt.label;
+
+        btn.onclick = () => {
+          state.compressionMode = opt.value;
+          state.activePresetId = ""; // break preset linkage
+          updateUIState();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // Toggle setting override drawer per frame
+    function toggleSettingsDrawer(frameId, event) {
+      event.stopPropagation(); // don't trigger frame selection toggle
+      if (state.expandedOverrideId === frameId) {
+        state.expandedOverrideId = null;
+      } else {
+        state.expandedOverrideId = frameId;
+      }
+      renderFrameList();
+    }
+
+    // Update settings overrides for a specific frame
+    function updateFrameOverride(frameId, key, val) {
+      if (!state.frameOverrides[frameId]) {
+        state.frameOverrides[frameId] = { sizeMode: "inherit", padding: "inherit", bleed: false };
+      }
+      state.frameOverrides[frameId][key] = val;
+      updateUIState();
+    }
+
+    // Render dynamically dragged Frame Cards (Feed list)
+    function renderFrameList() {
+      const container = document.getElementById("frames-scroll-container");
+      
+      if (state.allFrames.length === 0) {
+        container.innerHTML = `
+          <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center text-zinc-500 gap-3" style="min-height: 220px;">
+            <div class="h-11 w-11 rounded-full bg-white border border-zinc-200 d-flex align-items-center justify-content-center text-zinc-400 shadow-sm" style="width: 44px; height: 44px; background-color: var(--color-bg-white) !important; border-color: var(--color-border) !important;">
+              <i class="ri-alert-line font-bold" style="font-size: 16px;"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-xs text-zinc-800 mb-1">No canvas frames selected</h3>
+              <p class="text-zinc-400 m-0 leading-normal" style="font-size: 11px; max-width: 200px;">
+                Select one or more frames in your Figma workspace to initialize PDF compiled projects.
+              </p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      
+      // Calculate active order indexes
+      const getSelectionOrder = (id) => {
+        const activeQueue = state.orderedIds.filter(i => state.selectedIds.has(i));
+        const idx = activeQueue.indexOf(id);
+        return idx >= 0 ? idx + 1 : "";
+      };
+
+      state.orderedIds.forEach(id => {
+        const frame = state.allFrames.find(f => f.id === id);
+        if (!frame) return;
+
+        const isSelected = state.selectedIds.has(id);
+        const orderNum = getSelectionOrder(id);
+        const isDrawerOpen = state.expandedOverrideId === id;
+        
+        // Fetch overrides for this card
+        const over = state.frameOverrides[id] || { sizeMode: "inherit", padding: "inherit", bleed: false };
+
+        const wrapper = document.createElement("div");
+        wrapper.className = `frame-card-wrapper ${isSelected ? "selected" : ""}`;
+        wrapper.setAttribute("draggable", "true");
+        wrapper.setAttribute("data-id", id);
+
+        wrapper.innerHTML = `
+          <div class="frame-card">
+            <!-- Drag grip icon -->
+            <div class="drag-handle" title="Drag to reorder page">
+              <i class="ri-drag-move-2-line"></i>
+            </div>
+
+            <!-- Custom Salkom checkbox -->
+            <div class="custom-checkbox">
+              <i class="ri-check-line"></i>
+            </div>
+
+            <!-- Thumbnail Box -->
+            <div class="thumb-wrapper">
+              ${frame.thumbnailBinary 
+                ? `<img src="data:image/png;base64,${btoa(frame.thumbnailBinary)}" alt="${frame.name}" />`
+                : '<i class="ri-image-line text-zinc-300"></i>'
+              }
+              <!-- Circular selection order tag -->
+              ${isSelected ? `<div class="order-badge">${orderNum}</div>` : ""}
+            </div>
+
+            <!-- Frame Labels -->
+            <div class="flex-grow-1 min-w-0 pr-2">
+              <div class="fw-bold text-zinc-800 truncate leading-snug" style="font-size: 13px;">${frame.name}</div>
+              <div class="text-zinc-400 font-mono tracking-tight mt-0.5 leading-none" style="font-size: 10px; font-weight: 500;">
+                ${Math.round(frame.width)} × ${Math.round(frame.height)} px
+                ${over.sizeMode !== "inherit" ? `• <span class="text-brand text-uppercase">${over.sizeMode}</span>` : ""}
+                ${over.bleed ? '• <span class="text-emerald-500 font-bold">BLEED</span>' : ""}
+              </div>
+            </div>
+
+            <!-- Frame Override Gear settings -->
+            <div class="card-settings-trigger" onclick="toggleSettingsDrawer('${id}', event)" title="Frame Overrides Settings">
+              <i class="ri-settings-4-line" style="${isDrawerOpen ? "color: var(--color-brand);" : ""}"></i>
+            </div>
+          </div>
+
+          <!-- Slide down drawer layout -->
+          ${isDrawerOpen ? `
+            <div class="override-drawer">
+              <div class="row g-2 align-items-center">
+                <div class="col-4">
+                  <label class="text-uppercase text-zinc-400 font-bold mb-1" style="font-size: 8.5px; letter-spacing: 0.05em;">Size Override</label>
+                  <select class="form-select py-1 font-semibold" style="font-size: 10.5px;" onchange="updateFrameOverride('${id}', 'sizeMode', this.value)">
+                    <option value="inherit" ${over.sizeMode === "inherit" ? "selected" : ""}>Inherit (Global)</option>
+                    <option value="original" ${over.sizeMode === "original" ? "selected" : ""}>Original Canvas</option>
+                    <option value="a4" ${over.sizeMode === "a4" ? "selected" : ""}>A4 Standard</option>
+                    <option value="letter" ${over.sizeMode === "letter" ? "selected" : ""}>US Letter</option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <label class="text-uppercase text-zinc-400 font-bold mb-1" style="font-size: 8.5px; letter-spacing: 0.05em;">Margin (mm)</label>
+                  <select class="form-select py-1 font-semibold" style="font-size: 10.5px;" onchange="updateFrameOverride('${id}', 'padding', this.value === 'inherit' ? 'inherit' : parseInt(this.value))">
+                    <option value="inherit" ${over.padding === "inherit" ? "selected" : ""}>Inherit</option>
+                    <option value="0" ${over.padding === 0 ? "selected" : ""}>0 mm</option>
+                    <option value="4" ${over.padding === 4 ? "selected" : ""}>4 mm</option>
+                    <option value="8" ${over.padding === 8 ? "selected" : ""}>8 mm</option>
+                    <option value="12" ${over.padding === 12 ? "selected" : ""}>12 mm</option>
+                    <option value="16" ${over.padding === 16 ? "selected" : ""}>16 mm</option>
+                  </select>
+                </div>
+                <div class="col-4 d-flex align-items-center gap-2 pt-3">
+                  <input type="checkbox" id="chk-bleed-${id}" class="form-check-input cursor-pointer" ${over.bleed ? "checked" : ""} onchange="updateFrameOverride('${id}', 'bleed', this.checked)">
+                  <label class="text-uppercase text-zinc-500 font-semibold cursor-pointer m-0" for="chk-bleed-${id}" style="font-size: 9.5px;">Vector Bleed</label>
+                </div>
+              </div>
+            </div>
+          ` : ""}
+        `;
+
+        // ── Drag & Drop Events (Vanilla API) ──
+        wrapper.ondragstart = (e) => {
+          state.draggedId = id;
+          wrapper.classList.add("dragging");
+          e.dataTransfer.effectAllowed = "move";
+          
+          const img = new Image();
+          img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
+          e.dataTransfer.setDragImage(img, 0, 0);
+        };
+
+        wrapper.ondragover = (e) => {
+          e.preventDefault();
+          if (state.draggedId === id) return;
+          wrapper.classList.add("drag-over");
+        };
+
+        wrapper.ondragleave = () => {
+          wrapper.classList.remove("drag-over");
+        };
+
+        wrapper.ondrop = (e) => {
+          e.preventDefault();
+          wrapper.classList.remove("drag-over");
+          
+          const srcId = state.draggedId;
+          const trgId = id;
+          if (!srcId || srcId === trgId) return;
+
+          const idxSrc = state.orderedIds.indexOf(srcId);
+          const idxTrg = state.orderedIds.indexOf(trgId);
+
+          if (idxSrc !== -1 && idxTrg !== -1) {
+            state.orderedIds.splice(idxSrc, 1);
+            state.orderedIds.splice(idxTrg, 0, srcId);
+            renderFrameList();
+            updateUIState();
+          }
+        };
+
+        wrapper.ondragend = () => {
+          wrapper.classList.remove("dragging");
+          state.draggedId = null;
+        };
+
+        // Selection trigger on card body clicks
+        wrapper.onclick = (e) => {
+          if (e.target.closest(".drag-handle") || e.target.closest(".card-settings-trigger") || e.target.closest(".override-drawer")) return;
+          
+          if (state.selectedIds.has(id)) {
+            state.selectedIds.delete(id);
+          } else {
+            state.selectedIds.add(id);
+          }
+          renderFrameList();
+          updateUIState();
+        };
+
+        container.appendChild(wrapper);
+      });
+    }
+
+    // ── Safe Memory-backed Figma clientStorage History Engine ──
+    let memoryLogs = [];
+
+    function logExport(fileName, totalSize, pagesCount, base64Pdf) {
+      const activePreset = presets.find(p => p.id === state.activePresetId)?.name || "Custom Layout";
+      
+      const newLog = {
+        id: Date.now(),
+        fileName,
+        timestamp: new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+        size: formatBytes(totalSize),
+        pages: pagesCount,
+        presetName: activePreset
+      };
+      
+      memoryLogs.unshift(newLog);
+      if (memoryLogs.length > 15) memoryLogs = memoryLogs.slice(0, 15); // cap at 15 items
+      
+      // Dispatch persistent write to Figma clientStorage
+      try {
+        parent.postMessage({ pluginMessage: { type: "SAVE_HISTORY_LOGS", logs: memoryLogs } }, "*");
+        if (base64Pdf) {
+          parent.postMessage({ pluginMessage: { type: "SAVE_PDF_BLOB", id: newLog.id, base64: base64Pdf } }, "*");
+        }
+      } catch (err) {
+        console.warn("Figma postMessage history sync failed:", err);
+      }
+
+      // Safe local storage try/catch fallback (only for local browsers, silent fail inside Figma sandbox)
+      try {
+        localStorage.setItem("framestack_logs", JSON.stringify(memoryLogs));
+      } catch (e) {
+        console.log("Figma sandbox data URL active. Using memoryLogs for export history.");
+      }
+
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("history-log-list");
+      const emptyState = document.getElementById("history-empty-state");
+      
+      if (memoryLogs.length === 0) {
+        emptyState.classList.remove("d-none");
+        container.classList.add("d-none");
+        return;
+      }
+      
+      emptyState.classList.add("d-none");
+      container.classList.remove("d-none");
+      
+      container.innerHTML = "";
+      memoryLogs.forEach(log => {
+        const item = document.createElement("div");
+        item.className = "history-card";
+        item.innerHTML = `
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 bg-brand-light text-brand d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="ri-file-pdf-fill" style="font-size: 18px;"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-zinc-800 truncate" style="font-size: 13.5px; max-width: 240px; letter-spacing: -0.01em;">${log.fileName}</div>
+              <div class="text-zinc-400 font-medium mt-0.5" style="font-size: 10.5px;">${log.timestamp} • ${log.presetName}</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-1.5 font-mono me-2">
+              <span class="badge bg-slate-100 text-slate-700 border" style="font-size: 10px; padding: 4px 10px; border-radius: 6px; background-color: var(--color-bg-base) !important; color: var(--color-text-body) !important; border-color: var(--color-border) !important;">${log.pages} pgs</span>
+              <span class="badge bg-emerald-50 text-emerald-700 border border-emerald-200" style="font-size: 10px; padding: 4px 10px; border-radius: 6px;">${log.size}</span>
+            </div>
+            <button class="btn-redownload-pdf" onclick="reDownloadPdf(${log.id}, this, event)" title="Re-download PDF">
+              <i class="ri-download-cloud-2-line"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Trigger asynchronous PDF load and download stream
+    function reDownloadPdf(logId, buttonEl, event) {
+      event.stopPropagation();
+      
+      buttonEl.setAttribute("disabled", "true");
+      buttonEl.innerHTML = `<div class="spinner-ring" style="width: 12px; height: 12px; border-width: 1.5px;"></div>`;
+      
+      try {
+        parent.postMessage({
+          pluginMessage: {
+            type: "FETCH_PDF_DATA",
+            id: logId
+          }
+        }, "*");
+      } catch (err) {
+        showToast("Figma backend sandbox disconnected.", "error");
+        buttonEl.removeAttribute("disabled");
+        buttonEl.innerHTML = `<i class="ri-download-cloud-2-line"></i>`;
+      }
+    }
+
+    // ── Central State Sync ──
+    function updateUIState() {
+      // 1. Sync controls lists
+      renderPresets();
+      renderDimensions();
+      renderCompression();
+
+      // 2. Padding slider disable rule
+      const marginSlider = document.getElementById("input-margin-slider");
+      const marginBadge = document.getElementById("lbl-margin-value");
+      
+      marginBadge.textContent = `${state.padding} mm`;
+      marginSlider.value = state.padding;
+
+      if (state.sizeMode === "original") {
+        marginSlider.disabled = true;
+        marginSlider.style.opacity = "0.3";
+      } else {
+        marginSlider.disabled = false;
+        marginSlider.style.opacity = "1";
+      }
+
+      // 3. Selection Summary Header Toggles
+      const selectAllBtn = document.getElementById("btn-select-all-toggle");
+      const summaryText = document.getElementById("txt-selection-summary");
+      const footerCount = document.getElementById("lbl-footer-count");
+      
+      const selectedCount = state.selectedIds.size;
+      const totalCount = state.allFrames.length;
+
+      summaryText.textContent = `${selectedCount} of ${totalCount} selected`;
+      footerCount.textContent = `${selectedCount} / ${totalCount} Selected`;
+
+      if (totalCount > 0 && selectedCount === totalCount) {
+        selectAllBtn.textContent = "Deselect All";
+      } else {
+        selectAllBtn.textContent = "Select All";
+      }
+
+      // 4. Export button availability
+      const exportBtn = document.getElementById("btn-export-pdf");
+      if (selectedCount > 0) {
+        exportBtn.removeAttribute("disabled");
+      } else {
+        exportBtn.setAttribute("disabled", "true");
+      }
+
+      // 5. Advanced Compression Card Estimator
+      const rawBytes = getSelectionRawBytes() * 8;
+      let finalBytes = rawBytes;
+
+      if (state.compressionMode === "low") {
+        finalBytes = rawBytes * 0.87;
+      } else if (state.compressionMode === "average") {
+        finalBytes = rawBytes * 0.58;
+      } else if (state.compressionMode === "high") {
+        finalBytes = rawBytes * 0.37;
+      }
+
+      document.getElementById("txt-bytes-estimate").textContent = `${formatBytes(rawBytes)} → ${formatBytes(finalBytes)}`;
+      
+      const reductionPct = rawBytes > 0 ? Math.round(((rawBytes - finalBytes) / rawBytes) * 100) : 0;
+      const reductionEl = document.getElementById("txt-reduction-saving");
+      if (reductionPct > 0) {
+        reductionEl.textContent = `-${reductionPct}% Saved`;
+        reductionEl.className = "font-bold text-emerald-600 font-mono bg-emerald-50 px-2 py-0.5 rounded-pill border border-emerald-100/50";
+      } else {
+        reductionEl.textContent = "Lossless";
+        reductionEl.className = "font-bold text-zinc-500 font-mono bg-slate-100 px-2 py-0.5 rounded-pill border border-slate-200/50";
+      }
+    }
+
+    // ── Export Staging Loop Orchestrator ──
+    
+    function triggerPdfExport() {
+      const activeQueue = state.orderedIds.filter(id => state.selectedIds.has(id));
+      if (activeQueue.length === 0) return;
+
+      pdfInstance = null;
+      state.exportState = {
+        isExporting: true,
+        exportQueue: activeQueue,
+        currentIndex: 0,
+        progress: 0,
+        totalBytes: 0
+      };
+
+      // Open progress mask overlay
+      const overlay = document.getElementById("modal-queue-overlay");
+      overlay.classList.add("active");
+
+      document.getElementById("txt-overlay-percent").textContent = "0%";
+      document.getElementById("txt-overlay-staging").textContent = `Staging Page 1 of ${activeQueue.length}...`;
+      document.getElementById("fill-overlay-bar").style.width = "0%";
+
+      // Send first payload request to sandboxed code.js
+      parent.postMessage({
+        pluginMessage: {
+          type: "EXPORT_SINGLE_FRAME",
+          id: activeQueue[0]
+        }
+      }, "*");
+    }
+
+    // Dispatch next staging stage or complete
+    function advanceStaging(bytesAdded) {
+      const q = state.exportState.exportQueue;
+      const curIdx = state.exportState.currentIndex;
+      const nextIdx = curIdx + 1;
+      const total = q.length;
+
+      const progressVal = Math.round((nextIdx / total) * 100);
+      state.exportState.currentIndex = nextIdx;
+      state.exportState.progress = progressVal;
+      state.exportState.totalBytes += bytesAdded;
+
+      // Update progress overlay visuals
+      document.getElementById("txt-overlay-percent").textContent = `${progressVal}%`;
+      document.getElementById("fill-overlay-bar").style.width = `${progressVal}%`;
+
+      if (nextIdx < total) {
+        document.getElementById("txt-overlay-staging").textContent = `Staging Page ${nextIdx + 1} of ${total}...`;
+        parent.postMessage({
+          pluginMessage: {
+            type: "EXPORT_SINGLE_FRAME",
+            id: q[nextIdx]
+          }
+        }, "*");
+      } else {
+        // Queue staging complete, trigger file saving
+        try {
+          // Set properties/metadata
+          const docTitle = document.getElementById("meta-title").value || "FrameStack PDF Export";
+          const docAuthor = document.getElementById("meta-author").value || "Salkom Design Studio";
+          const docSubject = document.getElementById("meta-subject").value || "Design Delivery Layout Specs";
+          const docKeywords = document.getElementById("meta-keywords").value || "figma, pdf, framestack, specs";
+
+          pdfInstance.setProperties({
+            title: docTitle,
+            author: docAuthor,
+            subject: docSubject,
+            keywords: docKeywords,
+            creator: "FrameStack PDF SaaS Platform"
+          });
+
+          const saveName = docTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".pdf";
+          
+          // Extract base64 encoded PDF payload before save session terminates
+          const pdfDataUri = pdfInstance.output("datauristring");
+          const base64Pdf = pdfDataUri.split(",")[1];
+          
+          pdfInstance.save(saveName);
+          
+          showToast(`PDF exported successfully! — ${formatBytes(state.exportState.totalBytes)}`, "success");
+          
+          // Log inside history with the base64 blob payload
+          logExport(saveName, state.exportState.totalBytes, total, base64Pdf);
+
+        } catch (err) {
+          showToast(`Save failure: ${err.message}`, "error");
+        }
+        cancelExportSession();
+      }
+    }
+
+    function cancelExportSession() {
+      state.exportState.isExporting = false;
+      document.getElementById("modal-queue-overlay").classList.remove("active");
+      pdfInstance = null;
+    }
+
+    // ── Canvas compiling JPEG logic ──
+    async function compilePdfPage(msg) {
+      if (!state.exportState.isExporting) return;
+
+      const queue = state.exportState.exportQueue;
+      const index = state.exportState.currentIndex;
+
+      if (msg.id !== queue[index]) return;
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const useCompression = state.compressionMode !== "none";
+        let quality = 0.92;
+
+        if (state.compressionMode === "low") quality = 0.96;
+        if (state.compressionMode === "high") quality = 0.88;
+
+        const base64Str = btoa(msg.imageBinary);
+        
+        let imageUrl;
+        if (useCompression) {
+          imageUrl = await pngBase64ToJpeg(base64Str, quality);
+        } else {
+          imageUrl = "data:image/png;base64," + base64Str;
+        }
+
+        const addedBytes = Math.round(imageUrl.length * 0.75);
+
+        // Fetch overrides for this card
+        const over = state.frameOverrides[msg.id] || { sizeMode: "inherit", padding: "inherit", bleed: false };
+        
+        const cardSizeMode = over.sizeMode !== "inherit" ? over.sizeMode : state.sizeMode;
+        const cardPadding = over.padding !== "inherit" ? over.padding : state.padding;
+        const hasBleed = over.bleed;
+
+        // Dimensions configuration
+        let pdfW, pdfH;
+        if (cardSizeMode === "a4") {
+          pdfW = 210;
+          pdfH = 297;
+        } else if (cardSizeMode === "letter") {
+          pdfW = 215.9;
+          pdfH = 279.4;
+        } else {
+          pdfW = msg.width * 0.264583;
+          pdfH = msg.height * 0.264583;
+        }
+
+        const orientation = pdfW >= pdfH ? "landscape" : "portrait";
+
+        // Initialize PDF Instance or prepend Cover Page if enabled
+        if (!pdfInstance) {
+          // Prepend automated Cover Page first if toggle checked
+          const coverEnabled = document.getElementById("toggle-cover-page").checked;
+          if (coverEnabled) {
+            const title = document.getElementById("cover-title").value || "FrameStack Export Delivery";
+            const subtitle = document.getElementById("cover-subtitle").value || "Interactive presentation layout specs";
+            const theme = document.getElementById("cover-theme").value || "minimal";
+
+            // Establish standard Cover dimensions
+            let coverW = pdfW;
+            let coverH = pdfH;
+            
+            pdfInstance = new jsPDF({
+              orientation,
+              unit: "mm",
+              format: cardSizeMode === "original" ? [coverW, coverH] : cardSizeMode
+            });
+
+            // Draw Cover backgrounds and decorations based on Salkom themes
+            if (theme === "bold") {
+              pdfInstance.setFillColor(15, 23, 42); // deep slate-900
+              pdfInstance.rect(0, 0, coverW, coverH, "F");
+              
+              // Colored stripe accent
+              pdfInstance.setFillColor(0, 20, 209); // brand cobalt
+              pdfInstance.rect(20, coverH / 2 - 25, 32, 2.5, "F");
+              
+              pdfInstance.setTextColor(255, 255, 255);
+              pdfInstance.setFont("helvetica", "bold");
+              pdfInstance.setFontSize(22);
+              pdfInstance.text(title, 20, coverH / 2 - 10);
+              
+              pdfInstance.setTextColor(148, 163, 184); // slate-400
+              pdfInstance.setFont("helvetica", "normal");
+              pdfInstance.setFontSize(11);
+              pdfInstance.text(subtitle, 20, coverH / 2 + 2);
+              
+              pdfInstance.setTextColor(71, 85, 105);
+              pdfInstance.setFontSize(8.5);
+              pdfInstance.text("Salkom Studio specs • " + new Date().toLocaleDateString(), 20, coverH - 20);
+            } else if (theme === "stripe") {
+              pdfInstance.setFillColor(255, 255, 255);
+              pdfInstance.rect(0, 0, coverW, coverH, "F");
+              
+              // Left accent colored bar
+              pdfInstance.setFillColor(0, 20, 209);
+              pdfInstance.rect(0, 0, 12, coverH, "F");
+              
+              pdfInstance.setTextColor(15, 23, 42);
+              pdfInstance.setFont("helvetica", "bold");
+              pdfInstance.setFontSize(20);
+              pdfInstance.text(title, 32, coverH / 2 - 12);
+              
+              pdfInstance.setTextColor(100, 116, 139);
+              pdfInstance.setFont("helvetica", "normal");
+              pdfInstance.setFontSize(10.5);
+              pdfInstance.text(subtitle, 32, coverH / 2);
+              
+              pdfInstance.setTextColor(148, 163, 184);
+              pdfInstance.setFontSize(9);
+              pdfInstance.text(new Date().toLocaleDateString(), 32, coverH / 2 + 10);
+            } else {
+              // Minimal style
+              pdfInstance.setFillColor(248, 250, 252);
+              pdfInstance.rect(0, 0, coverW, coverH, "F");
+              
+              pdfInstance.setTextColor(15, 23, 42);
+              pdfInstance.setFont("helvetica", "bold");
+              pdfInstance.setFontSize(18);
+              pdfInstance.text(title, 20, 50);
+              
+              pdfInstance.setTextColor(100, 116, 139);
+              pdfInstance.setFont("helvetica", "normal");
+              pdfInstance.setFontSize(10.5);
+              pdfInstance.text(subtitle, 20, 60);
+
+              pdfInstance.setTextColor(148, 163, 184);
+              pdfInstance.setFontSize(8.5);
+              pdfInstance.text("Salkom Design Studio © " + new Date().getFullYear(), 20, coverH - 24);
+            }
+
+            // Prepend a second sheet to house the first layout thumbnail frame
+            pdfInstance.addPage(cardSizeMode === "original" ? [pdfW, pdfH] : cardSizeMode, orientation);
+          } else {
+            pdfInstance = new jsPDF({
+              orientation,
+              unit: "mm",
+              format: cardSizeMode === "original" ? [pdfW, pdfH] : cardSizeMode
+            });
+          }
+        } else {
+          pdfInstance.addPage(cardSizeMode === "original" ? [pdfW, pdfH] : cardSizeMode, orientation);
+        }
+
+        // Draw margins, scaling, and bleed crop lines inside sheet
+        if (cardSizeMode === "original") {
+          pdfInstance.addImage(imageUrl, useCompression ? "JPEG" : "PNG", 0, 0, pdfW, pdfH);
+        } else {
+          const maxW = pdfW - cardPadding * 2;
+          const maxH = pdfH - cardPadding * 2;
+          const asp = msg.width / msg.height;
+          const boxAsp = maxW / maxH;
+
+          let dW = asp > boxAsp ? maxW : maxH * asp;
+          let dH = asp > boxAsp ? maxW / asp : maxH;
+
+          const renderX = cardPadding + (maxW - dW) / 2;
+          const renderY = cardPadding + (maxH - dH) / 2;
+
+          pdfInstance.addImage(
+            imageUrl,
+            useCompression ? "JPEG" : "PNG",
+            renderX,
+            renderY,
+            dW,
+            dH
+          );
+
+          // Vector Bleed Crop Lines Rendering
+          if (hasBleed) {
+            pdfInstance.setDrawColor(148, 163, 184); // slate-400 vector drawing color
+            pdfInstance.setLineWidth(0.2);
+            
+            // Top-left marks
+            pdfInstance.line(renderX - 4, renderY, renderX + 4, renderY);
+            pdfInstance.line(renderX, renderY - 4, renderX, renderY + 4);
+            
+            // Top-right marks
+            pdfInstance.line(renderX + dW - 4, renderY, renderX + dW + 4, renderY);
+            pdfInstance.line(renderX + dW, renderY - 4, renderX + dW, renderY + 4);
+            
+            // Bottom-left marks
+            pdfInstance.line(renderX - 4, renderY + dH, renderX + 4, renderY + dH);
+            pdfInstance.line(renderX, renderY + dH - 4, renderX, renderY + dH + 4);
+            
+            // Bottom-right marks
+            pdfInstance.line(renderX + dW - 4, renderY + dH, renderX + dW + 4, renderY + dH);
+            pdfInstance.line(renderX + dW, renderY + dH - 4, renderX + dW, renderY + dH + 4);
+          }
+        }
+
+        advanceStaging(addedBytes);
+
+      } catch (err) {
+        showToast(`Staging fail: ${err.message}`, "error");
+        cancelExportSession();
+      }
+    }
+
+    // ── Window Messaging Listeners ──
+    window.onmessage = async (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === "LOADING") {
+        document.getElementById("frames-scroll-container").innerHTML = `
+          <div class="d-flex flex-column align-items-center justify-content-center py-5 text-zinc-500">
+            <div class="spinner-ring"></div>
+            <span class="text-xs font-semibold mt-3 text-zinc-500">Analyzing canvas layers & staging thumbnails...</span>
+          </div>
+        `;
+      }
+
+      if (msg.type === "NO_FRAMES") {
+        state.allFrames = [];
+        state.orderedIds = [];
+        state.selectedIds.clear();
+        renderFrameList();
+        updateUIState();
+      }
+
+      if (msg.type === "FRAMES_LOADED") {
+        const isRefresh = msg.isRefresh;
+        
+        // Stash loaded elements
+        state.allFrames = msg.frames;
+        const newOrdered = msg.frames.map(f => f.id);
+
+        const currentSelected = new Set(state.selectedIds);
+        state.selectedIds.clear();
+
+        newOrdered.forEach(id => {
+          if (currentSelected.has(id) || !isRefresh) {
+            state.selectedIds.add(id);
+          }
+        });
+
+        // Auto select all frames on initial load
+        if (!isRefresh && state.selectedIds.size === 0) {
+          newOrdered.forEach(id => state.selectedIds.add(id));
+        }
+
+        state.orderedIds = newOrdered;
+        
+        renderFrameList();
+        updateUIState();
+      }
+
+      if (msg.type === "SINGLE_FRAME_READY") {
+        compilePdfPage(msg);
+      }
+
+      if (msg.type === "SINGLE_FRAME_FAILED") {
+        showToast(`Export failed: ${msg.reason || "sandbox compile failure"}`, "error");
+        cancelExportSession();
+      }
+
+      if (msg.type === "HISTORY_LOGS_READY") {
+        memoryLogs = msg.logs || [];
+        renderHistory();
+      }
+
+      if (msg.type === "PDF_DATA_READY") {
+        try {
+          const logItem = memoryLogs.find(log => log.id === msg.id);
+          const saveName = logItem ? logItem.fileName : "framestack-export.pdf";
+          
+          // Convert base64 back into downloadable binary file
+          const byteCharacters = atob(msg.base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: "application/pdf" });
+          
+          // Create download link and trigger
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = saveName;
+          link.click();
+          
+          showToast(`PDF re-downloaded successfully!`, "success");
+        } catch (e) {
+          showToast(`Re-download fail: ${e.message}`, "error");
+        }
+        
+        // Remove loading spinner from buttons
+        document.querySelectorAll(".btn-redownload-pdf").forEach(btn => {
+          btn.removeAttribute("disabled");
+          btn.innerHTML = `<i class="ri-download-cloud-2-line"></i>`;
+        });
+      }
+
+      if (msg.type === "PDF_DATA_FAILED") {
+        showToast(`Download failed: ${msg.reason}`, "error");
+        document.querySelectorAll(".btn-redownload-pdf").forEach(btn => {
+          btn.removeAttribute("disabled");
+          btn.innerHTML = `<i class="ri-download-cloud-2-line"></i>`;
+        });
+      }
+    };
+
+    // ── Input & Buttons Listeners ──
+    
+    // Close plugin
+    document.getElementById("btn-close-plugin").onclick = () => {
+      parent.postMessage({ pluginMessage: { type: "CLOSE" } }, "*");
+    };
+
+    // Selection toggle header
+    document.getElementById("btn-select-all-toggle").onclick = () => {
+      const count = state.selectedIds.size;
+      const total = state.allFrames.length;
+
+      if (count === total) {
+        state.selectedIds.clear();
+      } else {
+        state.orderedIds.forEach(id => state.selectedIds.add(id));
+      }
+      renderFrameList();
+      updateUIState();
+    };
+
+    // Margin range slider
+    document.getElementById("input-margin-slider").oninput = (e) => {
+      state.padding = parseInt(e.target.value);
+      state.activePresetId = ""; // break preset linkage
+      updateUIState();
+    };
+
+    // Export trigger
+    document.getElementById("btn-export-pdf").onclick = () => {
+      triggerPdfExport();
+    };
+
+    // Cancel overlay
+    document.getElementById("btn-cancel-export").onclick = () => {
+      cancelExportSession();
+    };
+
+    // Cover Page builder controls visibility
+    document.getElementById("toggle-cover-page").onchange = (e) => {
+      const controls = document.getElementById("cover-builder-controls");
+      if (e.target.checked) {
+        controls.classList.remove("d-none");
+      } else {
+        controls.classList.add("d-none");
+      }
+    };
+
+    // Clear history logs
+    document.getElementById("btn-clear-history").onclick = () => {
+      memoryLogs = [];
+      try {
+        parent.postMessage({ pluginMessage: { type: "SAVE_HISTORY_LOGS", logs: [] } }, "*");
+        localStorage.removeItem("framestack_logs");
+      } catch (e) {
+        console.warn("Figma history clear failed:", e);
+      }
+      showToast("Export history logs cleared.", "success");
+      renderHistory();
+    };
+
+    // Dark Mode Switch sliding
+    document.getElementById("btn-theme-toggle").onclick = () => {
+      const isDark = document.body.classList.toggle("dark-theme");
+      const icon = document.getElementById("btn-theme-toggle").querySelector("i");
+      
+      if (isDark) {
+        icon.className = "ri-sun-line";
+        showToast("Switched to Midnight Slate Dark Mode.", "success");
+      } else {
+        icon.className = "ri-moon-clear-line";
+        showToast("Switched to Pristine Light Mode.", "success");
+      }
+      
+      // Re-render frame list card backgrounds instantly
+      renderFrameList();
+      renderHistory();
+    };
+
+    // Fetch logs from Figma clientStorage on startup
+    try {
+      parent.postMessage({ pluginMessage: { type: "GET_HISTORY_LOGS" } }, "*");
+    } catch(err) {
+      console.warn("Figma clientStorage query failed:", err);
+    }
+
+    // Initialize UI settings view
+    updateUIState();
+  </script>
+</body>
+</html>

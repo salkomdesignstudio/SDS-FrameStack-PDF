@@ -1,181 +1,196 @@
 // ============================================================================
-// FrameStack PDF — code.js (Figma Plugin Sandbox Runner)
-// Purpose: Multi-frame selection listener, image exporter, and UI messaging bridge.
+// FrameStack PDF — code.js  v2.0
+// Figma Plugin Sandbox Runner
+// Architecture: Message dispatch table, sequential export safety, typed events
 // ============================================================================
 
-// Mount the compiled UI iframe with responsive desktop dimensions
 figma.showUI(__html__, {
   width: 620,
   height: 760,
   title: "FrameStack PDF"
 });
 
-/**
- * High-Speed Safety Binary String Encoder
- * QuickJS sandbox threads lock up when serializing raw byte arrays or large objects.
- * Dividing the Uint8Array into 16,384-byte subsegments and converting them to strings 
- * allows instant data postMessage transfer in under 5 milliseconds with zero memory overhead.
- */
+// ── Typed message constants (single source of truth shared with ui.html) ──
+const MSG = {
+  // Sandbox → UI
+  LOADING:             "LOADING",
+  NO_FRAMES:           "NO_FRAMES",
+  FRAMES_LOADED:       "FRAMES_LOADED",
+  SINGLE_FRAME_READY:  "SINGLE_FRAME_READY",
+  SINGLE_FRAME_FAILED: "SINGLE_FRAME_FAILED",
+  HISTORY_LOGS_READY:  "HISTORY_LOGS_READY",
+  PDF_DATA_READY:      "PDF_DATA_READY",
+  PDF_DATA_FAILED:     "PDF_DATA_FAILED",
+  // UI → Sandbox
+  EXPORT_SINGLE_FRAME: "EXPORT_SINGLE_FRAME",
+  SAVE_HISTORY_LOGS:   "SAVE_HISTORY_LOGS",
+  GET_HISTORY_LOGS:    "GET_HISTORY_LOGS",
+  SAVE_PDF_BLOB:       "SAVE_PDF_BLOB",
+  FETCH_PDF_DATA:      "FETCH_PDF_DATA",
+  CLEAR_ALL_PDF_BLOBS: "CLEAR_ALL_PDF_BLOBS",
+  CLOSE:               "CLOSE"
+};
+
+const STORAGE_KEYS = {
+  HISTORY_LOGS: "framestack_history_logs",
+  PDF_BLOB_PREFIX: "pdf_blob_"
+};
+
+// ── Safe binary encoder ──
+// QuickJS freezes on large typed array serialisation.
+// Chunking into 16 KB slices avoids the call-stack overflow.
 function uint8ToBinaryString(arr) {
-  const chunks = [];
-  const chunkSize = 16384;
-  for (let i = 0; i < arr.length; i += chunkSize) {
-    chunks.push(String.fromCharCode.apply(null, arr.subarray(i, i + chunkSize)));
+  const CHUNK = 16384;
+  const parts = [];
+  for (let i = 0; i < arr.length; i += CHUNK) {
+    parts.push(String.fromCharCode.apply(null, arr.subarray(i, i + CHUNK)));
   }
-  return chunks.join("");
+  return parts.join("");
 }
 
-/**
- * Initializes and polls frames selected on the active page.
- * Filter types to FRAME only, generate quick thumbnails, and send to ui.html.
- */
+// ── Send helper (keeps call sites clean) ──
+function send(payload) {
+  figma.ui.postMessage(payload);
+}
+
+// ── Frame selection loader ──
 async function initSelection(isRefresh = false) {
-  const selectedNodes = figma.currentPage.selection;
-  const frames = selectedNodes.filter(node => node.type === "FRAME");
+  const selection = figma.currentPage.selection;
+  const frames   = selection.filter(n => n.type === "FRAME");
 
   if (frames.length === 0) {
-    const hasAnySelection = selectedNodes.length > 0;
-    figma.ui.postMessage({ type: "NO_FRAMES", hasAnySelection, isRefresh });
+    send({ type: MSG.NO_FRAMES, hasAnySelection: selection.length > 0, isRefresh });
     return;
   }
 
-  // Signal UI that thumbnails are rendering
-  figma.ui.postMessage({ type: "LOADING", isRefresh });
+  send({ type: MSG.LOADING, isRefresh });
+
+  // Process sequentially to prevent Figma sandbox memory spikes on large selections.
+  // Promise.all is fine for small counts; sequential is safer for 20+ frames.
+  const USE_SEQUENTIAL_THRESHOLD = 8;
+  const frameData = [];
 
   try {
-    // Stage thumbnails sequentially for maximum memory safety
-    const frameData = await Promise.all(
-      frames.map(async (frame) => {
-        // Export lightweight 0.25x PNG for list thumbnails
-        const thumbnailBytes = await frame.exportAsync({
-          format: "PNG",
-          constraint: { type: "SCALE", value: 0.25 }
-        });
+    if (frames.length <= USE_SEQUENTIAL_THRESHOLD) {
+      const results = await Promise.all(
+        frames.map(frame => exportThumbnail(frame))
+      );
+      frameData.push(...results);
+    } else {
+      for (const frame of frames) {
+        frameData.push(await exportThumbnail(frame));
+      }
+    }
 
-        return {
-          id: frame.id,
-          name: frame.name,
-          width: frame.width,
-          height: frame.height,
-          thumbnailBinary: uint8ToBinaryString(thumbnailBytes)
-        };
-      })
-    );
-
-    figma.ui.postMessage({ type: "FRAMES_LOADED", frames: frameData, isRefresh });
+    send({ type: MSG.FRAMES_LOADED, frames: frameData, isRefresh });
   } catch (err) {
-    figma.ui.postMessage({
-      type: "SINGLE_FRAME_FAILED",
-      id: "all",
-      reason: "Canvas access/thumbnail error: " + err.message
+    send({
+      type: MSG.SINGLE_FRAME_FAILED,
+      id: "batch",
+      reason: "Thumbnail staging error: " + (err.message || String(err))
     });
   }
 }
 
-// ── Live Selection Sync ──
-figma.on("selectionchange", () => {
-  initSelection(true);
-});
+async function exportThumbnail(frame) {
+  const bytes = await frame.exportAsync({
+    format: "PNG",
+    constraint: { type: "SCALE", value: 0.25 }
+  });
+  return {
+    id:              frame.id,
+    name:            frame.name,
+    width:           frame.width,
+    height:          frame.height,
+    thumbnailBinary: uint8ToBinaryString(bytes)
+  };
+}
 
-// ── Message Router ──
-figma.ui.onmessage = async (msg) => {
-  // High-fidelity image staging for PDF creation
-  if (msg.type === "EXPORT_SINGLE_FRAME") {
-    const { id } = msg;
+// ── Message dispatch table ──
+const handlers = {
+
+  async [MSG.EXPORT_SINGLE_FRAME]({ id }) {
     try {
       const node = await figma.getNodeByIdAsync(id);
-      if (node && node.type === "FRAME") {
-        // Export high resolution crisp 2x scale PNG
-        const imageBytes = await node.exportAsync({
-          format: "PNG",
-          constraint: { type: "SCALE", value: 2 }
-        });
-
-        figma.ui.postMessage({
-          type: "SINGLE_FRAME_READY",
-          id: node.id,
-          name: node.name,
-          width: node.width,
-          height: node.height,
-          imageBinary: uint8ToBinaryString(imageBytes)
-        });
-      } else {
-        figma.ui.postMessage({
-          type: "SINGLE_FRAME_FAILED",
-          id,
-          reason: "Target frame layer no longer exists on this canvas."
-        });
+      if (!node || node.type !== "FRAME") {
+        send({ type: MSG.SINGLE_FRAME_FAILED, id, reason: "Frame no longer exists on canvas." });
+        return;
       }
+      const bytes = await node.exportAsync({
+        format: "PNG",
+        constraint: { type: "SCALE", value: 2 }
+      });
+      send({
+        type:        MSG.SINGLE_FRAME_READY,
+        id:          node.id,
+        name:        node.name,
+        width:       node.width,
+        height:      node.height,
+        imageBinary: uint8ToBinaryString(bytes)
+      });
     } catch (err) {
-      figma.ui.postMessage({
-        type: "SINGLE_FRAME_FAILED",
+      send({
+        type:   MSG.SINGLE_FRAME_FAILED,
         id,
         reason: err.message || String(err)
       });
     }
-  }
+  },
 
-  // Save custom client history logs to persistent Figma clientStorage
-  if (msg.type === "SAVE_HISTORY_LOGS") {
-    figma.clientStorage.setAsync("framestack_history_logs", msg.logs).catch(() => {});
-  }
+  [MSG.SAVE_HISTORY_LOGS]({ logs }) {
+    figma.clientStorage.setAsync(STORAGE_KEYS.HISTORY_LOGS, logs).catch(() => {});
+  },
 
-  // Load custom client history logs from persistent Figma clientStorage
-  if (msg.type === "GET_HISTORY_LOGS") {
-    figma.clientStorage.getAsync("framestack_history_logs")
-      .then(logs => {
-        figma.ui.postMessage({ type: "HISTORY_LOGS_READY", logs: logs || [] });
-      })
-      .catch(() => {
-        figma.ui.postMessage({ type: "HISTORY_LOGS_READY", logs: [] });
-      });
-  }
+  [MSG.GET_HISTORY_LOGS]() {
+    figma.clientStorage.getAsync(STORAGE_KEYS.HISTORY_LOGS)
+      .then(logs => send({ type: MSG.HISTORY_LOGS_READY, logs: logs || [] }))
+      .catch(()  => send({ type: MSG.HISTORY_LOGS_READY, logs: [] }));
+  },
 
-  // Save specific PDF data blob to figma.clientStorage under a unique key
-  if (msg.type === "SAVE_PDF_BLOB") {
-    figma.clientStorage.setAsync("pdf_blob_" + msg.id, msg.base64).catch(() => {});
-  }
+  [MSG.SAVE_PDF_BLOB]({ id, base64 }) {
+    figma.clientStorage.setAsync(STORAGE_KEYS.PDF_BLOB_PREFIX + id, base64).catch(() => {});
+  },
 
-  // Fetch specific PDF data blob from figma.clientStorage and post back to UI
-  if (msg.type === "FETCH_PDF_DATA") {
-    figma.clientStorage.getAsync("pdf_blob_" + msg.id)
+  [MSG.FETCH_PDF_DATA]({ id }) {
+    figma.clientStorage.getAsync(STORAGE_KEYS.PDF_BLOB_PREFIX + id)
       .then(base64 => {
         if (base64) {
-          figma.ui.postMessage({
-            type: "PDF_DATA_READY",
-            id: msg.id,
-            base64: base64
-          });
+          send({ type: MSG.PDF_DATA_READY, id, base64 });
         } else {
-          figma.ui.postMessage({
-            type: "PDF_DATA_FAILED",
-            id: msg.id,
-            reason: "PDF content is no longer available or was cleared."
-          });
+          send({ type: MSG.PDF_DATA_FAILED, id, reason: "PDF content no longer available." });
         }
       })
-      .catch((err) => {
-        figma.ui.postMessage({
-          type: "PDF_DATA_FAILED",
-          id: msg.id,
-          reason: err.message || "Failed to load PDF database."
-        });
-      });
-  }
+      .catch(err => send({
+        type: MSG.PDF_DATA_FAILED,
+        id,
+        reason: err.message || "Storage read failure."
+      }));
+  },
 
-  // Clear specific PDF data blobs to reclaim storage
-  if (msg.type === "CLEAR_ALL_PDF_BLOBS") {
-    const ids = msg.ids || [];
-    ids.forEach(id => {
-      figma.clientStorage.deleteAsync("pdf_blob_" + id).catch(() => {});
-    });
-  }
+  [MSG.CLEAR_ALL_PDF_BLOBS]({ ids = [] }) {
+    ids.forEach(id =>
+      figma.clientStorage.deleteAsync(STORAGE_KEYS.PDF_BLOB_PREFIX + id).catch(() => {})
+    );
+  },
 
-  // Gracefully terminate Figma runtime environment
-  if (msg.type === "CLOSE") {
+  [MSG.CLOSE]() {
     figma.closePlugin();
   }
 };
 
-// Start detection loop immediately on mount
+// ── Live selection sync ──
+figma.on("selectionchange", () => initSelection(true));
+
+// ── Incoming message router ──
+figma.ui.onmessage = (msg) => {
+  if (!msg || !msg.type) return;
+  const handler = handlers[msg.type];
+  if (handler) {
+    handler(msg);
+  } else {
+    console.warn("[FrameStack] Unknown message type:", msg.type);
+  }
+};
+
+// ── Boot ──
 initSelection();

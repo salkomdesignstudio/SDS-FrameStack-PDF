@@ -1,2574 +1,2947 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FrameStack PDF</title>
-
-  <!-- Typefaces -->
-  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/400.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/500.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/600.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/700.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.18/500.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-
-  <!-- jsPDF: patch willReadFrequently before load to silence Canvas2D perf warning -->
-  <script>
-    (function () {
-      const _orig = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function (type, attrs) {
-        if (type === "2d") attrs = Object.assign({ willReadFrequently: true }, attrs || {});
-        return _orig.call(this, type, attrs);
-      };
-    })();
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <style>
-    /* =========================================================================
-       DESIGN TOKENS
-       ========================================================================= */
-    :root {
-      --brand:           #0014D1;
-      --brand-hover:     #000FA8;
-      --brand-light:     rgba(0, 20, 209, 0.06);
-      --brand-border:    rgba(0, 20, 209, 0.14);
-      --brand-gradient:  linear-gradient(135deg, #0014D1 0%, #000FA8 100%);
-
-      --bg:              #F8FAFC;
-      --surface:         #FFFFFF;
-      --border:          #E2E8F0;
-      --border-hover:    rgba(0, 20, 209, 0.22);
-
-      --ink:             #0B0F1A;
-      --body:            #475569;
-      --muted:           #64748B;
-      --subtle:          #94A3B8;
-      --faint:           #CBD5E1;
-
-      --green-bg:        #F0FDF4;
-      --green-border:    #BBF7D0;
-      --green-text:      #166534;
-
-      --red-bg:          #FEF2F2;
-      --red-border:      #FCA5A5;
-      --red-text:        #991B1B;
-
-      --sans: 'Inter', system-ui, -apple-system, sans-serif;
-      --mono: 'JetBrains Mono', 'Fira Code', monospace;
-
-      --radius-sm: 6px;
-      --radius:    10px;
-      --radius-lg: 14px;
-
-      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-      --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.05);
-      --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.07);
-      --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.10);
-
-      --h-header:  52px;
-      --h-tabs:    40px;
-      --h-footer:  60px;
-      --ease:      cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    /* Dark Mode */
-    [data-theme="dark"] {
-      --bg:           #090D1A;
-      --surface:      #111827;
-      --border:       #1E293B;
-      --border-hover: rgba(0, 20, 209, 0.38);
-
-      --ink:          #F1F5F9;
-      --body:         #CBD5E1;
-      --muted:        #94A3B8;
-      --subtle:       #64748B;
-      --faint:        #334155;
-
-      --green-bg:     rgba(6, 78, 59, 0.25);
-      --green-border: rgba(52, 211, 153, 0.2);
-      --green-text:   #34D399;
-
-      --red-bg:     rgba(69, 10, 10, 0.4);
-      --red-border: rgba(185, 28, 28, 0.4);
-      --red-text:   #FCA5A5;
-
-      --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
-      --shadow-sm: 0 2px 6px rgba(0,0,0,0.3);
-      --shadow-md: 0 4px 14px rgba(0,0,0,0.35);
-      --shadow-lg: 0 12px 28px rgba(0,0,0,0.5);
-    }
-
-    /* =========================================================================
-       RESET & BASE
-       ========================================================================= */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-
-    body {
-      font-family: var(--sans);
-      font-size: 13px;
-      line-height: 1.5;
-      background: var(--bg);
-      color: var(--body);
-      -webkit-font-smoothing: antialiased;
-      user-select: none;
-      display: flex;
-      flex-direction: column;
-      transition: background 0.2s var(--ease), color 0.2s var(--ease);
-    }
-
-    button {
-      font-family: var(--sans);
-      cursor: pointer;
-      border: none;
-      background: none;
-      padding: 0;
-      color: inherit;
-    }
-    button:focus-visible {
-      outline: 2px solid var(--brand);
-      outline-offset: 2px;
-      border-radius: var(--radius-sm);
-    }
-
-    input, select {
-      font-family: var(--sans);
-      font-size: 12px;
-      background: var(--surface);
-      color: var(--ink);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 7px 10px;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      width: 100%;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--brand);
-      box-shadow: 0 0 0 2.5px var(--brand-light);
-    }
-
-    [data-theme="dark"] input,
-    [data-theme="dark"] select {
-      background: #0C1321;
-      border-color: #2D3748;
-      color: var(--ink);
-    }
-
-    /* =========================================================================
-       SCROLLBAR
-       ========================================================================= */
-    ::-webkit-scrollbar          { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track    { background: transparent; }
-    ::-webkit-scrollbar-thumb    { background: var(--faint); border-radius: 99px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
-
-    /* =========================================================================
-       LAYOUT SKELETON
-       ========================================================================= */
-    #app-header {
-      height: var(--h-header);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      flex-shrink: 0;
-      z-index: 40;
-      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
-    }
-
-    #app-tabs {
-      height: var(--h-tabs);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: flex-end;
-      padding: 0 20px;
-      gap: 20px;
-      flex-shrink: 0;
-      z-index: 35;
-      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
-    }
-
-    #app-workspace {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-    }
-
-    #app-footer {
-      height: var(--h-footer);
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      flex-shrink: 0;
-      z-index: 20;
-      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
-    }
-
-    /* =========================================================================
-       HEADER
-       ========================================================================= */
-    .logo-mark {
-      width: 26px;
-      height: 26px;
-      border-radius: 7px;
-      background: var(--brand-gradient);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 3px 8px rgba(0, 20, 209, 0.28);
-    }
-    .logo-mark i { font-size: 13px; color: #fff; }
-
-    .app-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--ink);
-      letter-spacing: -0.01em;
-      line-height: 1;
-    }
-    .app-subtitle {
-      font-size: 9.5px;
-      color: var(--subtle);
-      margin-top: 1px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 7px;
-      border-radius: 99px;
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      border: 1px solid;
-    }
-    .pill-green {
-      background: var(--green-bg);
-      border-color: var(--green-border);
-      color: var(--green-text);
-    }
-
-    .icon-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      transition: color 0.15s, background 0.15s;
-    }
-    .icon-btn:hover { background: var(--bg); color: var(--ink); }
-    .icon-btn i { font-size: 15px; }
-
-    /* =========================================================================
-       TABS
-       ========================================================================= */
-    .tab-btn {
-      height: 38px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 0 2px;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--muted);
-      border-bottom: 2px solid transparent;
-      transition: color 0.15s, border-color 0.15s;
-      letter-spacing: -0.01em;
-      white-space: nowrap;
-    }
-    .tab-btn i { font-size: 13px; }
-    .tab-btn:hover { color: var(--ink); }
-    .tab-btn[aria-selected="true"] {
-      color: var(--ink);
-      border-bottom-color: var(--brand);
-      font-weight: 700;
-    }
-
-    /* =========================================================================
-       PANELS
-       ========================================================================= */
-    .tab-panel {
-      display: none;
-      flex-direction: column;
-      flex: 1;
-      overflow: hidden;
-    }
-    .tab-panel.is-active { display: flex; }
-
-    /* =========================================================================
-       CONFIG CARD (TOP OF CONFIGURE PANEL)
-       ========================================================================= */
-    .config-card {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      flex-shrink: 0;
-      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
-    }
-
-    /* =========================================================================
-       SECTION LABELS
-       ========================================================================= */
-    .section-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .section-label::before {
-      content: "";
-      width: 2.5px;
-      height: 10px;
-      border-radius: 4px;
-      background: var(--brand-gradient);
-      flex-shrink: 0;
-    }
-
-    /* =========================================================================
-       PRESET CHIPS
-       ========================================================================= */
-    .presets-row {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 3px;
-      scrollbar-width: none;
-    }
-    .presets-row::-webkit-scrollbar { display: none; }
-
-    .preset-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      background: var(--bg);
-      white-space: nowrap;
-      transition: all 0.18s var(--ease);
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--body);
-    }
-    .preset-chip i { font-size: 12px; color: var(--subtle); transition: color 0.15s; }
-    .preset-chip:hover {
-      border-color: var(--border-hover);
-      background: var(--surface);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
-    }
-    .preset-chip[aria-pressed="true"] {
-      border-color: var(--brand);
-      background: var(--brand-light);
-      color: var(--brand);
-      font-weight: 600;
-      box-shadow: 0 0 0 1px var(--brand), 0 3px 10px rgba(0, 20, 209, 0.07);
-    }
-    .preset-chip[aria-pressed="true"] i { color: var(--brand); }
-
-    /* =========================================================================
-       SEGMENTED CONTROLS (shared style for sizes & compression)
-       ========================================================================= */
-    .seg-group {
-      display: flex;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 3px;
-      gap: 2px;
-    }
-    [data-theme="dark"] .seg-group { background: #0C1321; }
-
-    .seg-btn {
-      flex: 1;
-      padding: 5px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      border-radius: 4px;
-      text-align: center;
-      transition: all 0.15s var(--ease);
-      line-height: 1.2;
-    }
-    .seg-btn:hover { color: var(--ink); }
-    .seg-btn[aria-pressed="true"] {
-      background: var(--surface);
-      color: var(--ink);
-      font-weight: 700;
-      box-shadow: var(--shadow-xs);
-    }
-
-    /* =========================================================================
-       RANGE SLIDER
-       ========================================================================= */
-    input[type="range"] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 4px;
-      background: var(--border);
-      border-radius: 99px;
-      border: none;
-      padding: 0;
-      box-shadow: none;
-      transition: background 0.2s;
-    }
-    input[type="range"]:focus { box-shadow: none; }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--brand);
-      border: 2px solid var(--surface);
-      box-shadow: 0 1px 4px rgba(0, 20, 209, 0.22);
-      cursor: pointer;
-      transition: transform 0.12s, box-shadow 0.12s;
-    }
-    input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.18);
-      box-shadow: 0 2px 8px rgba(0, 20, 209, 0.35);
-    }
-    input[type="range"]:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    /* =========================================================================
-       ESTIMATION BOX
-       ========================================================================= */
-    .estimate-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px 13px;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-    .estimate-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-    }
-    .estimate-row .label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      color: var(--muted);
-    }
-    .estimate-row .label i { font-size: 12px; }
-    .estimate-row .value { font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--ink); }
-    .badge-green {
-      background: var(--green-bg);
-      border: 1px solid var(--green-border);
-      color: var(--green-text);
-      padding: 2px 8px;
-      border-radius: 99px;
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-    }
-    .badge-neutral {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 2px 8px;
-      border-radius: 99px;
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-    }
-    .estimate-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 1px 0;
-    }
-    .estimate-disclaimer {
-      font-size: 9px;
-      color: var(--subtle);
-      text-align: center;
-      font-style: italic;
-      line-height: 1.4;
-    }
-
-    /* =========================================================================
-       FEED — FRAME LIST SCROLL AREA
-       ========================================================================= */
-    .feed-container {
-      flex: 1;
-      overflow-y: auto;
-      background: var(--bg);
-      padding: 14px 20px;
-      transition: background 0.2s var(--ease);
-    }
-
-    .feed-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .feed-toolbar-btn {
-      font-size: 11.5px;
-      font-weight: 700;
-      color: var(--brand);
-      transition: opacity 0.15s;
-    }
-    .feed-toolbar-btn:hover { opacity: 0.75; }
-    .feed-toolbar-count {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--subtle);
-    }
-
-    /* =========================================================================
-       FRAME CARDS
-       ========================================================================= */
-    #frame-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .frame-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-xs);
-      overflow: hidden;
-      transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
-    }
-    .frame-card:hover {
-      border-color: var(--faint);
-      box-shadow: var(--shadow-md);
-      transform: translateY(-1.5px);
-    }
-    [data-theme="dark"] .frame-card:hover { border-color: var(--subtle); }
-    .frame-card.is-selected {
-      border-color: var(--brand);
-      box-shadow: 0 0 0 1px var(--brand), 0 2px 8px rgba(0, 20, 209, 0.08);
-      transform: none;
-    }
-    .frame-card.is-dragging {
-      opacity: 0.35;
-      transform: scale(0.98);
-      border-color: var(--brand) !important;
-    }
-    .frame-card.is-drag-over {
-      border-color: var(--brand) !important;
-      box-shadow: 0 0 0 1.5px var(--brand), 0 4px 14px rgba(0, 20, 209, 0.1);
-      transform: none;
-    }
-
-    .frame-card-body {
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-    }
-
-    .drag-handle {
-      color: var(--subtle);
-      cursor: grab;
-      display: flex;
-      align-items: center;
-      padding: 4px 2px;
-      border-radius: 4px;
-      transition: color 0.15s;
-    }
-    .drag-handle:hover { color: var(--muted); }
-    .drag-handle:active { cursor: grabbing; }
-    .drag-handle i { font-size: 14px; }
-
-    /* Checkbox */
-    .frame-checkbox {
-      width: 17px;
-      height: 17px;
-      border: 1.5px solid var(--faint);
-      border-radius: 4px;
-      background: var(--surface);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.15s;
-    }
-    [data-theme="dark"] .frame-checkbox { background: #0C1321; border-color: var(--subtle); }
-    .frame-card.is-selected .frame-checkbox {
-      background: var(--brand);
-      border-color: var(--brand);
-    }
-    .frame-checkbox i { font-size: 9.5px; color: #fff; display: none; }
-    .frame-card.is-selected .frame-checkbox i { display: block; }
-
-    /* Thumbnail */
-    .frame-thumb {
-      width: 68px;
-      height: 52px;
-      border-radius: 5px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      position: relative;
-    }
-    .frame-thumb img { width: 100%; height: 100%; object-fit: contain; }
-    .frame-thumb-placeholder { color: var(--faint); font-size: 20px; }
-
-    .order-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      width: 17px;
-      height: 17px;
-      background: var(--brand-gradient);
-      color: #fff;
-      font-size: 9.5px;
-      font-weight: 800;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1.5px solid var(--surface);
-      box-shadow: 0 2px 5px rgba(0, 20, 209, 0.25);
-    }
-
-    .frame-meta { flex: 1; min-width: 0; }
-    .frame-name {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: var(--ink);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      letter-spacing: -0.01em;
-      transition: color 0.15s;
-    }
-    .frame-card.is-selected .frame-name { color: var(--brand); }
-    .frame-dims {
-      font-family: var(--mono);
-      font-size: 9.5px;
-      font-weight: 500;
-      color: var(--subtle);
-      margin-top: 2px;
-    }
-    .frame-dims .override-tag {
-      text-transform: uppercase;
-      font-weight: 700;
-      color: var(--brand);
-      margin-left: 4px;
-    }
-    .frame-dims .bleed-tag { color: #059669; font-weight: 700; margin-left: 4px; }
-
-    .settings-trigger {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--subtle);
-      transition: color 0.15s, transform 0.15s, background 0.15s;
-      flex-shrink: 0;
-    }
-    .settings-trigger:hover { color: var(--brand); background: var(--brand-light); transform: rotate(30deg); }
-    .settings-trigger.is-open { color: var(--brand); background: var(--brand-light); }
-    .settings-trigger i { font-size: 14px; }
-
-    /* Override drawer */
-    .override-drawer {
-      border-top: 1px dashed var(--border);
-      background: var(--bg);
-      padding: 12px 14px;
-      display: flex;
-      gap: 10px;
-      animation: drawerOpen 0.22s var(--ease) forwards;
-    }
-    @keyframes drawerOpen {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .override-col { flex: 1; min-width: 0; }
-    .override-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--subtle);
-      margin-bottom: 5px;
-      display: block;
-    }
-    .override-drawer select {
-      font-size: 11px;
-      padding: 5px 8px;
-    }
-    .bleed-row {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin-top: 6px;
-    }
-    .bleed-row input[type="checkbox"] {
-      width: 14px;
-      height: 14px;
-      accent-color: var(--brand);
-      border: none;
-      padding: 0;
-      cursor: pointer;
-    }
-    .bleed-row label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--body);
-      cursor: pointer;
-    }
-
-    /* =========================================================================
-       EMPTY & LOADING STATES
-       ========================================================================= */
-    .state-center {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 40px 24px;
-      gap: 12px;
-      min-height: 200px;
-    }
-    .state-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--subtle);
-      box-shadow: var(--shadow-xs);
-    }
-    .state-icon i { font-size: 18px; }
-    .state-title {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: var(--ink);
-    }
-    .state-desc {
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.5;
-      max-width: 200px;
-    }
-
-    .spinner {
-      width: 28px;
-      height: 28px;
-      border: 3px solid var(--border);
-      border-top-color: var(--brand);
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* =========================================================================
-       DOCUMENT PANEL
-       ========================================================================= */
-    .doc-section {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 18px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-xs);
-    }
-
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .toggle-switch {
-      position: relative;
-      width: 36px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-track {
-      position: absolute;
-      inset: 0;
-      background: var(--border);
-      border-radius: 99px;
-      transition: background 0.2s;
-      cursor: pointer;
-    }
-    .toggle-track::after {
-      content: "";
-      position: absolute;
-      left: 3px;
-      top: 3px;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #fff;
-      transition: transform 0.2s var(--ease);
-      box-shadow: var(--shadow-xs);
-    }
-    .toggle-switch input:checked + .toggle-track { background: var(--brand); }
-    .toggle-switch input:checked + .toggle-track::after { transform: translateX(16px); }
-    .toggle-switch input:focus-visible + .toggle-track { outline: 2px solid var(--brand); outline-offset: 2px; }
-
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-    .form-field { display: flex; flex-direction: column; gap: 5px; }
-    .form-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--subtle);
-    }
-
-    /* =========================================================================
-       HISTORY PANEL
-       ========================================================================= */
-    .history-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .btn-clear {
-      font-size: 10.5px;
-      font-weight: 600;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 9px;
-      border-radius: var(--radius-sm);
-      transition: all 0.15s;
-    }
-    .btn-clear:hover { background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red-border); }
-    .btn-clear i { font-size: 12px; }
-
-    .history-list { display: flex; flex-direction: column; gap: 8px; }
-
-    .history-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-xs);
-      transition: all 0.18s var(--ease);
-    }
-    .history-card:hover {
-      border-color: var(--faint);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
-    }
-    [data-theme="dark"] .history-card:hover { border-color: var(--subtle); }
-
-    .history-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 9px;
-      background: var(--brand-light);
-      border: 1px solid var(--brand-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .history-icon i { font-size: 17px; color: var(--brand); }
-
-    .history-name {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: var(--ink);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 200px;
-      letter-spacing: -0.01em;
-    }
-    .history-meta {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .badge-sm {
-      padding: 2px 8px;
-      border-radius: 5px;
-      font-size: 10px;
-      font-weight: 600;
-      font-family: var(--mono);
-      border: 1px solid;
-    }
-    .badge-neutral-sm {
-      background: var(--bg);
-      border-color: var(--border);
-      color: var(--muted);
-    }
-    .badge-green-sm {
-      background: var(--green-bg);
-      border-color: var(--green-border);
-      color: var(--green-text);
-    }
-
-    .btn-redownload {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      flex-shrink: 0;
-      transition: all 0.15s;
-    }
-    .btn-redownload:hover {
-      background: var(--brand-light);
-      border-color: var(--brand);
-      color: var(--brand);
-    }
-    .btn-redownload i { font-size: 13px; }
-    .btn-redownload:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* =========================================================================
-       FOOTER
-       ========================================================================= */
-    .footer-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--subtle); }
-    .footer-count {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--brand);
-      margin-top: 2px;
-      line-height: 1;
-    }
-
-    .btn-export {
-      height: 36px;
-      padding: 0 18px;
-      background: var(--brand-gradient);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      box-shadow: 0 4px 12px rgba(0, 20, 209, 0.22);
-      transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
-      letter-spacing: -0.01em;
-    }
-    .btn-export:hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(0, 20, 209, 0.3);
-    }
-    .btn-export:active { transform: translateY(0); }
-    .btn-export:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-    .btn-export i { font-size: 14px; }
-
-    /* =========================================================================
-       PROGRESS OVERLAY
-       ========================================================================= */
-    #export-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(9, 13, 26, 0.5);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s var(--ease);
-    }
-    #export-overlay.is-active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .export-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 22px;
-      width: 268px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      box-shadow: var(--shadow-lg);
-      text-align: center;
-    }
-
-    .spinner-lg {
-      width: 44px;
-      height: 44px;
-      border: 3.5px solid var(--border);
-      border-top-color: var(--brand);
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-      flex-shrink: 0;
-    }
-    .export-percent {
-      font-family: var(--mono);
-      font-size: 10.5px;
-      font-weight: 700;
-      color: var(--brand);
-    }
-    .export-title { font-size: 13px; font-weight: 700; color: var(--ink); }
-    .export-status { font-size: 11px; color: var(--muted); line-height: 1.4; }
-    .export-stage-label { font-size: 8px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand); }
-
-    .progress-track {
-      width: 100%;
-      height: 5px;
-      background: var(--border);
-      border-radius: 99px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: var(--brand-gradient);
-      border-radius: 99px;
-      transition: width 0.3s var(--ease);
-    }
-    .progress-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 8px;
-      color: var(--subtle);
-      font-family: var(--mono);
-      width: 100%;
-      margin-top: -4px;
-    }
-
-    .btn-cancel {
-      width: 100%;
-      height: 32px;
-      font-size: 10.5px;
-      font-weight: 700;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.15s;
-    }
-    .btn-cancel:hover { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
-    .btn-cancel i { font-size: 13px; }
-
-    /* =========================================================================
-       TOAST SYSTEM
-       ========================================================================= */
-    #toast-root {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      pointer-events: none;
-    }
-
-    .toast {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 9px 13px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 11px;
-      font-weight: 500;
-      box-shadow: var(--shadow-lg);
-      pointer-events: auto;
-      animation: toastIn 0.28s var(--ease) forwards;
-    }
-    .toast.is-leaving { animation: toastOut 0.25s var(--ease) forwards; }
-    @keyframes toastIn  { from { transform: translateY(-12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    @keyframes toastOut { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-10px); opacity: 0; } }
-
-    .toast-success { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
-    .toast-error   { background: var(--red-bg);   border-color: var(--red-border);   color: var(--red-text); }
-    .toast i { font-size: 14px; flex-shrink: 0; }
-
-    .toast-close {
-      margin-left: auto;
-      color: currentColor;
-      opacity: 0.6;
-      flex-shrink: 0;
-      width: 18px;
-      height: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .toast-close:hover { opacity: 1; }
-    .toast-close i { font-size: 13px; }
-
-    /* =========================================================================
-       UTILITIES
-       ========================================================================= */
-    .flex         { display: flex; }
-    .flex-col     { flex-direction: column; }
-    .items-center { align-items: center; }
-    .justify-between { justify-content: space-between; }
-    .gap-2  { gap: 8px; }
-    .gap-3  { gap: 12px; }
-    .gap-4  { gap: 16px; }
-    .flex-1 { flex: 1; }
-    .w-full { width: 100%; }
-    .sr-only {
-      position: absolute; width: 1px; height: 1px;
-      padding: 0; margin: -1px; overflow: hidden;
-      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-    }
-
-    /* =========================================================================
-       REDUCED MOTION
-       ========================================================================= */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <!-- ── Live toast region ── -->
-  <div id="toast-root" role="status" aria-live="polite" aria-atomic="false"></div>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       HEADER
-       ═══════════════════════════════════════════════════════════ -->
-  <header id="app-header" role="banner">
-    <div class="flex items-center gap-2">
-      <div class="logo-mark" aria-hidden="true">
-        <i class="ri-file-pdf-2-fill"></i>
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="app-title">FrameStack PDF</h1>
-          <span class="pill" style="background:var(--brand-light);border-color:var(--brand-border);color:var(--brand);">
-            SaaS
-          </span>
-        </div>
-        <div class="app-subtitle">
-          <i class="ri-team-line" style="font-size:10px;"></i>
-          Salkom Design Studio
-        </div>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <button id="btn-theme" class="icon-btn" aria-label="Toggle dark mode" title="Toggle dark/light mode">
-        <i class="ri-moon-clear-line" aria-hidden="true"></i>
-      </button>
-      <span class="pill pill-green">
-        <i class="ri-cloud-line" aria-hidden="true"></i>
-        Cloud Sync
-      </span>
-      <button id="btn-close" class="icon-btn" aria-label="Close plugin" title="Close plugin">
-        <i class="ri-close-line" aria-hidden="true"></i>
-      </button>
-    </div>
-  </header>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       TABS
-       ═══════════════════════════════════════════════════════════ -->
-  <nav id="app-tabs" role="tablist" aria-label="Plugin sections">
-    <button class="tab-btn" role="tab" data-tab="configure" aria-selected="true" aria-controls="panel-configure" id="tab-configure">
-      <i class="ri-settings-4-line" aria-hidden="true"></i>
-      Configure & Organize
-    </button>
-    <button class="tab-btn" role="tab" data-tab="document" aria-selected="false" aria-controls="panel-document" id="tab-document">
-      <i class="ri-file-edit-line" aria-hidden="true"></i>
-      Document & Cover
-    </button>
-    <button class="tab-btn" role="tab" data-tab="history" aria-selected="false" aria-controls="panel-history" id="tab-history">
-      <i class="ri-history-line" aria-hidden="true"></i>
-      Export History
-    </button>
-  </nav>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       WORKSPACE
-       ═══════════════════════════════════════════════════════════ -->
-  <main id="app-workspace" role="main">
-
-    <!-- PANEL A: Configure & Sequence -->
-    <section id="panel-configure" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-configure">
-
-      <!-- Config controls -->
-      <div class="config-card">
-
-        <!-- Presets -->
-        <div>
-          <div class="section-label" style="margin-bottom:8px;">Export Template Presets</div>
-          <div class="presets-row" id="presets-row" role="group" aria-label="Export presets"></div>
-        </div>
-
-        <!-- Page Size + Compression -->
-        <div class="flex gap-3">
-          <div style="flex:1;">
-            <div class="section-label" style="margin-bottom:7px;">Page Size</div>
-            <div class="seg-group" id="seg-sizes" role="group" aria-label="Page size options"></div>
-          </div>
-          <div style="flex:1;">
-            <div class="section-label" style="margin-bottom:7px;">
-              Compression
-              <i class="ri-zap-fill" style="font-size:10px;color:var(--brand);" aria-hidden="true"></i>
-            </div>
-            <div class="seg-group" id="seg-compression" role="group" aria-label="Compression level"></div>
-          </div>
-        </div>
-
-        <!-- Margin + Estimator -->
-        <div class="flex gap-3">
-          <div style="flex:1;">
-            <div class="flex items-center justify-between" style="margin-bottom:7px;">
-              <div class="section-label">Layout Margins</div>
-              <span id="margin-value-badge"
-                style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-light);padding:2px 7px;border-radius:4px;">
-                10 mm
-              </span>
-            </div>
-            <input type="range" id="margin-slider" min="0" max="32" step="2" value="10"
-              aria-label="Layout margin in millimetres" aria-valuemin="0" aria-valuemax="32">
-          </div>
-
-          <div style="flex:1;">
-            <div class="estimate-box">
-              <div class="estimate-row">
-                <span class="label"><i class="ri-database-2-line" aria-hidden="true"></i>Est. PDF Size</span>
-                <span id="est-size" class="value">0 KB → 0 KB</span>
-              </div>
-              <div class="estimate-row">
-                <span class="label"><i class="ri-scissors-cut-line" aria-hidden="true"></i>Reduction</span>
-                <span id="est-reduction" class="badge-neutral">Lossless</span>
-              </div>
-              <div class="estimate-divider"></div>
-              <div class="estimate-disclaimer">*Estimated only. Final size may vary.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Scroll feed: frame list -->
-      <div class="feed-container">
-        <div class="feed-toolbar">
-          <button id="btn-select-all" class="feed-toolbar-btn">Select All</button>
-          <span id="selection-summary" class="feed-toolbar-count" aria-live="polite">0 of 0 selected</span>
-        </div>
-        <div id="frame-list" role="list" aria-label="Frames to export"></div>
-      </div>
-    </section>
-
-    <!-- PANEL B: Document & Cover -->
-    <section id="panel-document" class="tab-panel" role="tabpanel" aria-labelledby="tab-document">
-      <div class="feed-container">
-
-        <!-- Cover page -->
-        <div class="doc-section">
-          <div class="toggle-row">
-            <div class="section-label">Cover Page Builder</div>
-            <label class="toggle-switch" aria-label="Include cover page">
-              <input type="checkbox" id="toggle-cover" aria-controls="cover-controls">
-              <span class="toggle-track"></span>
-            </label>
-          </div>
-
-          <div id="cover-controls" hidden style="margin-top:14px;">
-            <div class="form-grid">
-              <div class="form-field" style="grid-column:1/-1;">
-                <label class="form-label" for="cover-title">Cover Title</label>
-                <input type="text" id="cover-title" value="FrameStack Export Delivery">
-              </div>
-              <div class="form-field" style="grid-column:1/-1;">
-                <label class="form-label" for="cover-subtitle">Cover Subtitle</label>
-                <input type="text" id="cover-subtitle" value="Interactive mockup presentation and layout specs">
-              </div>
-              <div class="form-field" style="grid-column:1/-1;">
-                <label class="form-label" for="cover-theme">Design Theme</label>
-                <select id="cover-theme">
-                  <option value="minimal" selected>Salkom Blue Minimal</option>
-                  <option value="bold">Bold Corporate Black</option>
-                  <option value="stripe">Emerald Accent Stripe</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Metadata -->
-        <div class="doc-section">
-          <div class="section-label" style="margin-bottom:12px;">PDF Document Metadata</div>
-          <div class="form-grid">
-            <div class="form-field">
-              <label class="form-label" for="meta-title">Document Title</label>
-              <input type="text" id="meta-title" value="Mockup Specs Delivery">
-            </div>
-            <div class="form-field">
-              <label class="form-label" for="meta-author">Author Name</label>
-              <input type="text" id="meta-author" value="Salkom Design Studio">
-            </div>
-            <div class="form-field">
-              <label class="form-label" for="meta-subject">Subject</label>
-              <input type="text" id="meta-subject" value="Figma design delivery specs">
-            </div>
-            <div class="form-field">
-              <label class="form-label" for="meta-keywords">Keywords</label>
-              <input type="text" id="meta-keywords" value="figma, pdf, framestack, salkom">
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PANEL C: Export History -->
-    <section id="panel-history" class="tab-panel" role="tabpanel" aria-labelledby="tab-history">
-      <div class="feed-container">
-        <div class="history-header">
-          <div class="section-label">Export Activity</div>
-          <button id="btn-clear-history" class="btn-clear">
-            <i class="ri-delete-bin-line" aria-hidden="true"></i>
-            Clear Logs
-          </button>
-        </div>
-
-        <!-- Empty state -->
-        <div id="history-empty" class="state-center">
-          <div class="state-icon"><i class="ri-history-line" aria-hidden="true"></i></div>
-          <div class="state-title">No exports yet</div>
-          <div class="state-desc">Successful PDF exports will appear here with file size and timestamp.</div>
-        </div>
-
-        <!-- Log list -->
-        <div id="history-list" class="history-list" role="list" aria-label="Export history" hidden></div>
-      </div>
-    </section>
-
-    <!-- Progress overlay -->
-    <div id="export-overlay" role="dialog" aria-modal="true" aria-label="Export in progress" aria-live="polite">
-      <div class="export-card">
-        <div class="flex items-center" style="position:relative;">
-          <div class="spinner-lg" aria-hidden="true"></div>
-          <div class="export-percent" id="overlay-percent"
-            style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-            0%
-          </div>
-        </div>
-        <div style="width:100%;display:flex;flex-direction:column;gap:4px;align-items:center;">
-          <div class="export-title">Compiling PDF</div>
-          <div class="export-status" id="overlay-status">Staging assets…</div>
-          <div class="export-stage-label" style="margin-top:4px;">Enterprise Compression Pipeline</div>
-        </div>
-        <div style="width:100%;display:flex;flex-direction:column;gap:4px;">
-          <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="overlay-progress-bar">
-            <div class="progress-fill" id="overlay-progress-fill" style="width:0%"></div>
-          </div>
-          <div class="progress-labels">
-            <span>Staging</span>
-            <span>PDF Ready</span>
-          </div>
-        </div>
-        <button id="btn-cancel-export" class="btn-cancel">
-          <i class="ri-close-circle-line" aria-hidden="true"></i>
-          Cancel Export
-        </button>
-      </div>
-    </div>
-  </main>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       FOOTER
-       ═══════════════════════════════════════════════════════════ -->
-  <footer id="app-footer" role="contentinfo">
-    <div>
-      <div class="footer-label">Selected Payload</div>
-      <div id="footer-count" class="footer-count" aria-live="polite">0 / 0 Selected</div>
-    </div>
-    <button id="btn-export" class="btn-export" disabled aria-describedby="footer-count">
-      <i class="ri-download-2-line" aria-hidden="true"></i>
-      Compile PDF Export
-    </button>
-  </footer>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       APPLICATION LOGIC
-       ═══════════════════════════════════════════════════════════ -->
-  <script>
-  (function () {
-    "use strict";
-
-    // ──────────────────────────────────────────────────────────
-    // CONSTANTS
-    // ──────────────────────────────────────────────────────────
-    const COMPRESSION_QUALITY = {
-      none:    null,     // PNG — lossless
-      low:     0.96,
-      average: 0.85,
-      high:    0.72
-    };
-
-    const COMPRESSION_FACTORS = {
-      none:    1.0,
-      low:     0.87,
-      average: 0.55,
-      high:    0.35
-    };
-
-    const PAGE_DIMS = {
-      a4:     { w: 210,   h: 297   },
-      letter: { w: 215.9, h: 279.4 }
-    };
-
-    const PX_TO_MM = 0.264583;
-    const MAX_HISTORY = 15;
-    const HISTORY_LOG_KEY = "framestack_history_logs";
-
-    const PRESETS = [
-      { id: "ux-case-study",  name: "UX Case Study",    sizeMode: "original", compressionMode: "average", padding: 0,  icon: "ri-file-text-line"     },
-      { id: "behance-slides", name: "Behance Slides",   sizeMode: "a4",       compressionMode: "high",    padding: 10, icon: "ri-compass-3-line"      },
-      { id: "client-review",  name: "Client Review",    sizeMode: "letter",   compressionMode: "low",     padding: 12, icon: "ri-checkbox-circle-line"},
-      { id: "dev-handoff",    name: "Dev Handoff",      sizeMode: "original", compressionMode: "none",    padding: 0,  icon: "ri-code-line"           }
-    ];
-
-    const SIZE_OPTIONS        = [{ v: "original", l: "Original" }, { v: "a4", l: "A4" }, { v: "letter", l: "Letter" }];
-    const COMPRESSION_OPTIONS = [{ v: "none", l: "Lossless" }, { v: "low", l: "Low" }, { v: "average", l: "Balanced" }, { v: "high", l: "Max" }];
-
-    // ──────────────────────────────────────────────────────────
-    // STATE
-    // ──────────────────────────────────────────────────────────
-    const state = {
-      frames:           [],           // { id, name, width, height, thumbnailBinary, thumbB64? }
-      orderedIds:       [],
-      selectedIds:      new Set(),
-      frameOverrides:   {},           // { [id]: { sizeMode, padding, bleed } }
-      openOverrideId:   null,
-      dragSourceId:     null,
-
-      sizeMode:         "original",
-      compressionMode:  "average",
-      padding:          10,
-      activePresetId:   "",
-
-      exporting:        false,
-      exportQueue:      [],
-      exportIndex:      0,
-      exportTotalBytes: 0,
-
-      historyLogs:      []
-    };
-
-    // Shared jsPDF instance during export
-    let _pdf = null;
-
-    // ──────────────────────────────────────────────────────────
-    // PLUGIN BRIDGE
-    // ──────────────────────────────────────────────────────────
-    function postToPlugin(msg) {
-      try { parent.postMessage({ pluginMessage: msg }, "*"); }
-      catch (e) { console.warn("[FrameStack] Bridge error:", e); }
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // TOAST SYSTEM
-    // ──────────────────────────────────────────────────────────
-    const toastTimers = new Map();
-
-    function showToast(message, type = "info") {
-      const root = document.getElementById("toast-root");
-      const el   = document.createElement("div");
-
-      const iconMap = { success: "ri-checkbox-circle-fill", error: "ri-error-warning-fill", info: "ri-info-card-fill" };
-      el.className = `toast toast-${type}`;
-      el.innerHTML = `
-        <i class="${iconMap[type] || iconMap.info}" aria-hidden="true"></i>
-        <span style="flex:1;">${message}</span>
-        <button class="toast-close" aria-label="Dismiss notification">
-          <i class="ri-close-line" aria-hidden="true"></i>
-        </button>
-      `;
-
-      el.querySelector(".toast-close").addEventListener("click", () => dismissToast(el));
-      root.appendChild(el);
-
-      const tid = window.setTimeout(() => dismissToast(el), 4200);
-      toastTimers.set(el, tid);
-    }
-
-    function dismissToast(el) {
-      if (!el.parentNode) return;
-      const tid = toastTimers.get(el);
-      if (tid) { clearTimeout(tid); toastTimers.delete(el); }
-      el.classList.add("is-leaving");
-      el.addEventListener("animationend", () => el.remove(), { once: true });
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // FORMAT UTILITIES
-    // ──────────────────────────────────────────────────────────
-    function formatBytes(b) {
-      if (!b) return "0 KB";
-      if (b < 1024) return b + " B";
-      if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
-      return (b / 1048576).toFixed(2) + " MB";
-    }
-
-    function slugify(str) {
-      return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    }
-
-    // Cached thumbnail base64 conversion (avoids btoa on every render cycle)
-    const thumbCache = new Map();
-    function getThumbB64(frame) {
-      if (!frame.thumbnailBinary) return null;
-      if (thumbCache.has(frame.id)) return thumbCache.get(frame.id);
-      try {
-        const b64 = btoa(frame.thumbnailBinary);
-        thumbCache.set(frame.id, b64);
-        return b64;
-      } catch { return null; }
-    }
-    function clearThumbCache(ids) {
-      ids.forEach(id => thumbCache.delete(id));
-    }
-
-    // Convert PNG base64 → JPEG data URL at given quality
-    function pngToJpeg(b64, quality) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const c   = document.createElement("canvas");
-          c.width   = img.width;
-          c.height  = img.height;
-          const ctx = c.getContext("2d");
-          if (!ctx) { reject(new Error("Canvas context failed")); return; }
-          ctx.fillStyle = "#fff";
-          ctx.fillRect(0, 0, c.width, c.height);
-          ctx.drawImage(img, 0, 0);
-          resolve(c.toDataURL("image/jpeg", quality));
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrameStack PDF</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/400.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/500.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/600.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/700.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+
+    <script>
+      (function () {
+        const _orig = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+          if (type === "2d")
+            attrs = Object.assign({ willReadFrequently: true }, attrs || {});
+          return _orig.call(this, type, attrs);
         };
-        img.onerror = () => reject(new Error("Image decode failed"));
-        img.src = "data:image/png;base64," + b64;
-      });
-    }
+      })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    // Raw byte estimate from selected thumbnail binaries (proxy for real image size)
-    function estimateRawBytes() {
-      let total = 0;
-      for (const id of state.orderedIds) {
-        if (!state.selectedIds.has(id)) continue;
-        const f = state.frames.find(x => x.id === id);
-        if (f && f.thumbnailBinary) total += f.thumbnailBinary.length * 8;
-      }
-      return total;
-    }
+    <style>
+      /* ── TOKENS ── */
+      :root {
+        --brand: #0014d1;
+        --brand-h: #000fa8;
+        --brand-xlight: rgba(0, 20, 209, 0.06);
+        --brand-light: rgba(0, 20, 209, 0.1);
+        --brand-border: rgba(0, 20, 209, 0.18);
 
-    // ──────────────────────────────────────────────────────────
-    // RENDER — PRESETS
-    // ──────────────────────────────────────────────────────────
-    function renderPresets() {
-      const row = document.getElementById("presets-row");
-      // Minimal DOM diff: only update aria-pressed to avoid full rebuild
-      const existing = row.querySelectorAll(".preset-chip");
-      if (existing.length === PRESETS.length) {
-        PRESETS.forEach((p, i) => {
-          existing[i].setAttribute("aria-pressed", String(state.activePresetId === p.id));
-        });
-        return;
-      }
-      row.innerHTML = "";
-      PRESETS.forEach(p => {
-        const btn = document.createElement("button");
-        btn.className = "preset-chip";
-        btn.dataset.presetId = p.id;
-        btn.setAttribute("aria-pressed", String(state.activePresetId === p.id));
-        btn.setAttribute("title", p.description || p.name);
-        btn.innerHTML = `<i class="${p.icon}" aria-hidden="true"></i><span>${p.name}</span>`;
-        row.appendChild(btn);
-      });
-    }
+        --bg: #f7f8fc;
+        --surface: #ffffff;
+        --surface2: #f1f3f9;
+        --border: #e4e7ef;
+        --border-focus: rgba(0, 20, 209, 0.35);
 
-    // ──────────────────────────────────────────────────────────
-    // RENDER — SEGMENTED CONTROLS
-    // ──────────────────────────────────────────────────────────
-    function renderSegmented(containerId, options, activeValue, dataAttr) {
-      const c = document.getElementById(containerId);
-      if (c.children.length === options.length) {
-        Array.from(c.children).forEach((btn, i) => {
-          btn.setAttribute("aria-pressed", String(options[i].v === activeValue));
-        });
-        return;
-      }
-      c.innerHTML = "";
-      options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.className = "seg-btn";
-        btn.textContent = opt.l;
-        btn.dataset[dataAttr] = opt.v;
-        btn.setAttribute("aria-pressed", String(opt.v === activeValue));
-        c.appendChild(btn);
-      });
-    }
+        --ink: #0b0f1a;
+        --body: #4a5568;
+        --muted: #667085;
+        --subtle: #94a3b8;
+        --faint: #cbd5e1;
 
-    // ──────────────────────────────────────────────────────────
-    // RENDER — FRAME LIST (efficient, diff-aware)
-    // ──────────────────────────────────────────────────────────
-    function renderFrameList() {
-      const container = document.getElementById("frame-list");
+        --green: #0d9488;
+        --green-bg: #f0fdf9;
+        --green-border: #99f6e4;
 
-      // Empty state
-      if (state.frames.length === 0) {
-        container.innerHTML = "";
-        const emp = document.createElement("div");
-        emp.className = "state-center";
-        emp.innerHTML = `
-          <div class="state-icon"><i class="ri-alert-line" aria-hidden="true"></i></div>
-          <div class="state-title">No frames selected</div>
-          <div class="state-desc">Select one or more frames in Figma to begin composing your PDF.</div>`;
-        container.appendChild(emp);
-        return;
+        --red: #dc2626;
+        --red-bg: #fef2f2;
+        --red-border: #fca5a5;
+
+        --sans: "Inter", system-ui, sans-serif;
+
+        --r-xs: 4px;
+        --r-sm: 6px;
+        --r: 10px;
+        --r-lg: 14px;
+        --r-xl: 18px;
+
+        --sh-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+        --sh-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
+        --sh-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+        --sh-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+
+        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+        --h-header: 52px;
+        --h-nav: 48px;
+        --h-footer: 64px;
       }
 
-      // Build desired IDs list
-      const desiredIds = state.orderedIds;
+      [data-theme="dark"] {
+        --bg: #090d1a;
+        --surface: #111827;
+        --surface2: #0c1220;
+        --border: #1e2d45;
+        --border-focus: rgba(0, 20, 209, 0.5);
 
-      // Reconcile: remove cards for IDs that no longer exist
-      container.querySelectorAll(".frame-card[data-id]").forEach(el => {
-        if (!desiredIds.includes(el.dataset.id)) el.remove();
-      });
+        --ink: #f0f4ff;
+        --body: #c5d0e8;
+        --muted: #8899bb;
+        --subtle: #4a6080;
+        --faint: #1e2d45;
 
-      // Insert/update in correct order
-      let refNode = null;
-      for (let i = desiredIds.length - 1; i >= 0; i--) {
-        const id    = desiredIds[i];
-        const frame = state.frames.find(f => f.id === id);
-        if (!frame) continue;
+        --green-bg: rgba(13, 148, 136, 0.12);
+        --green-border: rgba(153, 246, 228, 0.2);
 
-        let card = container.querySelector(`.frame-card[data-id="${id}"]`);
-        if (!card) {
-          card = buildFrameCard(frame);
-        } else {
-          updateFrameCard(card, frame);
+        --red-bg: rgba(220, 38, 38, 0.12);
+        --red-border: rgba(252, 165, 165, 0.2);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        font-family: var(--sans);
+        font-size: 13px;
+        line-height: 1.5;
+        background: var(--bg);
+        color: var(--body);
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        transition:
+          background 0.2s var(--ease),
+          color 0.2s var(--ease);
+      }
+      button {
+        font-family: var(--sans);
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        color: inherit;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+        border-radius: var(--r-sm);
+      }
+      input,
+      select {
+        font-family: var(--sans);
+        font-size: 12px;
+        background: var(--surface);
+        color: var(--ink);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        padding: 7px 10px;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+        width: 100%;
+      }
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px var(--brand-xlight);
+      }
+      [data-theme="dark"] input,
+      [data-theme="dark"] select {
+        background: var(--surface2);
+        border-color: var(--border);
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--faint);
+        border-radius: 99px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--subtle);
+      }
+
+      /* ── HEADER ── */
+      #app-header {
+        height: var(--h-header);
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px 0 12px;
+        flex-shrink: 0;
+        z-index: 40;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+      }
+      .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .header-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--brand);
+        overflow: hidden;
+      }
+      .header-logo svg {
+        width: 18px;
+        height: 18px;
+      }
+      .header-wordmark {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .wordmark-name {
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        color: var(--ink);
+        line-height: 1.1;
+      }
+      .wordmark-tag {
+        font-size: 9px;
+        font-weight: 500;
+        color: var(--subtle);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .icon-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: var(--r-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 15px;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .icon-btn:hover {
+        background: var(--surface2);
+        color: var(--ink);
+      }
+
+      /* ── PROGRESSIVE NAV ── */
+      #app-nav {
+        height: var(--h-nav);
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: stretch;
+        padding: 0 14px;
+        gap: 0;
+        flex-shrink: 0;
+        z-index: 35;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+      }
+      .nav-step {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 14px 0 10px;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        position: relative;
+        transition:
+          border-color 0.18s,
+          color 0.18s,
+          background 0.15s;
+        color: var(--subtle);
+        font-size: 11.5px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        border-radius: 0;
+        flex-shrink: 0;
+        user-select: none;
+      }
+      .nav-step:not(.is-locked):hover {
+        color: var(--ink);
+        background: var(--brand-xlight);
+      }
+      .nav-step.is-active {
+        color: var(--brand);
+        border-bottom-color: var(--brand);
+      }
+      .nav-step.is-done {
+        color: var(--body);
+      }
+      .nav-step.is-locked {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+      .nav-step-num {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 9.5px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: var(--surface2);
+        color: var(--subtle);
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+      .nav-step.is-active .nav-step-num {
+        background: var(--brand);
+        color: #fff;
+      }
+      .nav-step.is-done .nav-step-num {
+        background: var(--green);
+        color: #fff;
+      }
+      .nav-step.is-done .nav-step-num::before {
+        content: none;
+      }
+      .nav-unlock-badge {
+        font-size: 8.5px;
+        font-weight: 600;
+        background: var(--brand-xlight);
+        color: var(--brand);
+        border: 1px solid var(--brand-border);
+        border-radius: 99px;
+        padding: 1px 6px;
+        letter-spacing: 0.02em;
+      }
+      .nav-divider {
+        width: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--faint);
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+
+      /* ── CONTENT AREA ── */
+      #app-body {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      .tab-panel {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: none;
+        flex-direction: column;
+      }
+      .tab-panel.is-active {
+        display: flex;
+      }
+
+      /* ── PANEL PADDING ── */
+      .panel-inner {
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        flex: 1;
+      }
+
+      /* ── SECTION LABEL ── */
+      .sec-label {
+        font-size: 9.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--subtle);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .sec-label i {
+        font-size: 11px;
+      }
+
+      /* ── PRESETS ── */
+      .preset-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .preset-chip {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 9px 6px;
+        border-radius: var(--r);
+        border: 1.5px solid var(--border);
+        background: var(--surface);
+        font-size: 9.5px;
+        font-weight: 600;
+        color: var(--body);
+        letter-spacing: 0.01em;
+        text-align: center;
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          color 0.15s,
+          box-shadow 0.15s;
+        cursor: pointer;
+        line-height: 1.2;
+      }
+      .preset-chip i {
+        font-size: 16px;
+        color: var(--muted);
+        transition: color 0.15s;
+      }
+      .preset-chip:hover {
+        border-color: var(--brand-border);
+        background: var(--brand-xlight);
+        color: var(--brand);
+      }
+      .preset-chip:hover i {
+        color: var(--brand);
+      }
+      .preset-chip[aria-pressed="true"] {
+        border-color: var(--brand);
+        background: var(--brand-xlight);
+        color: var(--brand);
+        box-shadow: 0 0 0 3px var(--brand-xlight);
+      }
+      .preset-chip[aria-pressed="true"] i {
+        color: var(--brand);
+      }
+
+      /* ── SEGMENTED ── */
+      .seg-group {
+        display: flex;
+        gap: 0;
+        background: var(--surface2);
+        border-radius: var(--r-sm);
+        padding: 2px;
+      }
+      .seg-btn {
+        flex: 1;
+        padding: 5px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        border-radius: calc(var(--r-sm) - 1px);
+        transition:
+          background 0.15s,
+          color 0.15s,
+          box-shadow 0.15s;
+        white-space: nowrap;
+      }
+      .seg-btn:hover {
+        color: var(--ink);
+      }
+      .seg-btn[aria-pressed="true"] {
+        background: var(--surface);
+        color: var(--ink);
+        font-weight: 600;
+        box-shadow:
+          0 1px 3px rgba(15, 23, 42, 0.08),
+          0 0 0 0.5px rgba(15, 23, 42, 0.06);
+      }
+
+      /* ── CONTROL ROW ── */
+      .ctrl-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      /* ── SLIDER ── */
+      .slider-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .margin-badge {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--brand);
+        background: var(--brand-xlight);
+        border: 1px solid var(--brand-border);
+        border-radius: 99px;
+        padding: 2px 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        height: 3px;
+        border-radius: 99px;
+        background: var(--faint);
+        cursor: pointer;
+        border: none;
+        padding: 0;
+        transition: opacity 0.15s;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--brand);
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 20, 209, 0.3);
+      }
+      input[type="range"]:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      /* ── FRAME LIST ── */
+      #frame-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+      }
+
+      .frame-card {
+        border: 1.5px solid var(--border);
+        border-radius: var(--r);
+        background: var(--surface);
+        overflow: hidden;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+        cursor: pointer;
+      }
+      .frame-card:hover {
+        border-color: var(--brand-border);
+        box-shadow: var(--sh-sm);
+      }
+      .frame-card.is-selected {
+        border-color: var(--brand);
+        box-shadow:
+          0 0 0 2.5px var(--brand-xlight),
+          var(--sh-xs);
+      }
+      .frame-card-main {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        min-height: 56px;
+      }
+      .frame-thumb-col {
+        width: 62px;
+        flex-shrink: 0;
+        background: var(--surface2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-right: 1px solid var(--border);
+      }
+      .frame-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+      .frame-thumb-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--faint);
+        font-size: 20px;
+        width: 100%;
+        height: 100%;
+      }
+      .frame-info-col {
+        flex: 1;
+        padding: 9px 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+        min-width: 0;
+      }
+      .frame-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .frame-dims {
+        font-size: 10px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .frame-dims-dot {
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background: var(--faint);
+        flex-shrink: 0;
+      }
+      .frame-actions-col {
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .frame-check-btn {
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+        border: 1.5px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface);
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+        font-size: 11px;
+        color: transparent;
+        flex-shrink: 0;
+      }
+      .frame-card.is-selected .frame-check-btn {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #fff;
+      }
+      .drag-handle {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--faint);
+        font-size: 14px;
+        cursor: grab;
+        flex-shrink: 0;
+      }
+      .drag-handle:hover {
+        color: var(--subtle);
+      }
+      .frame-card.is-dragging {
+        opacity: 0.4;
+        box-shadow: none;
+      }
+      .frame-card.drag-over {
+        border-color: var(--brand);
+        background: var(--brand-xlight);
+      }
+      .frame-badge-order {
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        border-radius: 99px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      /* ── STATE CENTER ── */
+      .state-center {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        text-align: center;
+        padding: 32px 20px;
+        color: var(--subtle);
+      }
+      .state-icon {
+        font-size: 28px;
+        color: var(--faint);
+      }
+      .state-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .state-desc {
+        font-size: 11.5px;
+        color: var(--subtle);
+        line-height: 1.5;
+        max-width: 220px;
+      }
+
+      /* ── DOCUMENT PANEL ── */
+      .doc-block {
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        background: var(--surface);
+        overflow: hidden;
+      }
+      .doc-block-head {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--surface2);
+      }
+      .doc-block-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .doc-block-title i {
+        font-size: 13px;
+        color: var(--brand);
+      }
+      .doc-block-body {
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .field-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .field-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+      }
+      .field-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      /* ── TOGGLE ── */
+      .toggle-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+      .toggle {
+        position: relative;
+        width: 30px;
+        height: 17px;
+        flex-shrink: 0;
+      }
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+      }
+      .toggle-track {
+        position: absolute;
+        inset: 0;
+        border-radius: 99px;
+        background: var(--faint);
+        transition: background 0.2s var(--ease);
+        cursor: pointer;
+      }
+      .toggle-thumb {
+        position: absolute;
+        top: 2.5px;
+        left: 2.5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s var(--ease);
+        pointer-events: none;
+      }
+      .toggle input:checked + .toggle-track {
+        background: var(--brand);
+      }
+      .toggle input:checked ~ .toggle-thumb {
+        transform: translateX(13px);
+      }
+      .toggle-label {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--body);
+      }
+
+      /* ── COVER THEMES ── */
+      .cover-themes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .cover-theme-btn {
+        padding: 8px 6px;
+        border-radius: var(--r-sm);
+        border: 1.5px solid var(--border);
+        background: var(--surface);
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--body);
+        text-align: center;
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          color 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+      }
+      .cover-theme-btn .theme-preview {
+        width: 28px;
+        height: 20px;
+        border-radius: 3px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .cover-theme-btn:hover {
+        border-color: var(--brand-border);
+      }
+      .cover-theme-btn[aria-pressed="true"] {
+        border-color: var(--brand);
+        background: var(--brand-xlight);
+        color: var(--brand);
+      }
+
+      /* ── EST SIZE BAR ── */
+      .est-bar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .est-label {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .est-label i {
+        font-size: 11px;
+      }
+      .est-value {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .badge-green {
+        font-size: 9px;
+        font-weight: 700;
+        background: var(--green-bg);
+        color: var(--green);
+        border: 1px solid var(--green-border);
+        border-radius: 99px;
+        padding: 2px 7px;
+      }
+      .badge-neutral {
+        font-size: 9px;
+        font-weight: 700;
+        background: var(--surface2);
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 99px;
+        padding: 2px 7px;
+      }
+
+      /* ── HISTORY ── */
+      .history-entry {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+      }
+      .history-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--r-sm);
+        background: var(--brand-xlight);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--brand);
+        font-size: 15px;
+        flex-shrink: 0;
+      }
+      .history-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .history-name {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .history-meta {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .btn-redownload {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-sm);
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 14px;
+        flex-shrink: 0;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .btn-redownload:hover {
+        background: var(--brand-xlight);
+        color: var(--brand);
+        border-color: var(--brand-border);
+      }
+
+      /* ── FOOTER ── */
+      #app-footer {
+        height: var(--h-footer);
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        flex-shrink: 0;
+        z-index: 30;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+      }
+      .footer-left {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .footer-eyebrow {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--subtle);
+      }
+      .footer-count {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .btn-export {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 18px;
+        height: 38px;
+        border-radius: var(--r);
+        background: var(--brand);
+        color: #fff;
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        transition:
+          background 0.15s,
+          box-shadow 0.15s,
+          transform 0.1s;
+        box-shadow:
+          0 1px 3px rgba(0, 20, 209, 0.25),
+          0 4px 12px rgba(0, 20, 209, 0.2);
+        white-space: nowrap;
+      }
+      .btn-export:hover {
+        background: var(--brand-h);
+        box-shadow:
+          0 2px 6px rgba(0, 20, 209, 0.3),
+          0 6px 18px rgba(0, 20, 209, 0.25);
+        transform: translateY(-1px);
+      }
+      .btn-export:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0, 20, 209, 0.2);
+      }
+      .btn-export:disabled {
+        background: var(--faint);
+        color: var(--subtle);
+        box-shadow: none;
+        transform: none;
+        cursor: not-allowed;
+      }
+      .btn-export i {
+        font-size: 15px;
+      }
+
+      /* toolbar row above frames */
+      .frames-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px 0;
+      }
+      .btn-select-all {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--brand);
+        padding: 4px 10px;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--brand-border);
+        background: var(--brand-xlight);
+        transition: background 0.15s;
+      }
+      .btn-select-all:hover {
+        background: var(--brand-light);
+      }
+      .frames-info {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      /* ── EXPORT OVERLAY ── */
+      #export-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(7, 11, 26, 0.7);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 100;
+        transition: opacity 0.25s var(--ease);
+      }
+      #export-overlay.is-active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .export-card {
+        background: var(--surface);
+        border-radius: var(--r-xl);
+        padding: 28px 24px 22px;
+        width: 260px;
+        box-shadow: var(--sh-lg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      .export-ring {
+        width: 60px;
+        height: 60px;
+        position: relative;
+      }
+      .export-ring svg {
+        width: 60px;
+        height: 60px;
+        transform: rotate(-90deg);
+      }
+      .export-ring-track {
+        fill: none;
+        stroke: var(--surface2);
+        stroke-width: 5;
+      }
+      .export-ring-fill {
+        fill: none;
+        stroke: var(--brand);
+        stroke-width: 5;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.4s var(--ease);
+      }
+      .export-ring-pct {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--brand);
+      }
+      .export-title {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--ink);
+        text-align: center;
+      }
+      .export-status {
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.4;
+      }
+      .export-stage {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--brand);
+        text-align: center;
+      }
+      .export-progress-bar {
+        width: 100%;
+        height: 4px;
+        background: var(--surface2);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .export-progress-fill {
+        height: 100%;
+        background: var(--brand);
+        border-radius: 99px;
+        width: 0%;
+        transition: width 0.4s var(--ease);
+      }
+      .btn-cancel {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        padding: 6px 14px;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        transition:
+          color 0.15s,
+          background 0.15s;
+      }
+      .btn-cancel:hover {
+        color: var(--red);
+        border-color: var(--red-border);
+        background: var(--red-bg);
+      }
+
+      /* ── SPINNER ── */
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid var(--brand-xlight);
+        border-top-color: var(--brand);
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
+      }
 
-        // Maintain order in DOM
-        if (refNode) {
-          container.insertBefore(card, refNode);
-        } else {
-          container.appendChild(card);
+      /* ── TOASTS ── */
+      #toast-root {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        pointer-events: none;
+        width: 90%;
+      }
+      .toast {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 12px;
+        border-radius: var(--r);
+        background: var(--ink);
+        color: #fff;
+        font-size: 11.5px;
+        font-weight: 500;
+        box-shadow: var(--sh-lg);
+        max-width: 300px;
+        width: 100%;
+        animation: toastIn 0.25s var(--ease) forwards;
+        pointer-events: auto;
+      }
+      .toast.is-leaving {
+        animation: toastOut 0.2s ease forwards;
+      }
+      .toast-success {
+        background: #0b3d2e;
+        color: #6ee7b7;
+      }
+      .toast-error {
+        background: #3d0b0b;
+        color: #fca5a5;
+      }
+      .toast i {
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+      .toast-close {
+        margin-left: auto;
+        padding: 2px;
+        color: inherit;
+        opacity: 0.6;
+        transition: opacity 0.15s;
+        flex-shrink: 0;
+        font-size: 14px;
+      }
+      .toast-close:hover {
+        opacity: 1;
+      }
+      @keyframes toastIn {
+        from {
+          transform: translateY(-10px);
+          opacity: 0;
         }
-        refNode = card;
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
-    }
-
-    function getSelectionOrder(id) {
-      const queue = state.orderedIds.filter(i => state.selectedIds.has(i));
-      const idx   = queue.indexOf(id);
-      return idx >= 0 ? idx + 1 : null;
-    }
-
-    function buildFrameCard(frame) {
-      const card = document.createElement("div");
-      card.className = "frame-card";
-      card.setAttribute("data-id", frame.id);
-      card.setAttribute("draggable", "true");
-      card.setAttribute("role", "listitem");
-      populateFrameCard(card, frame);
-      attachFrameCardEvents(card, frame.id);
-      return card;
-    }
-
-    function updateFrameCard(card, frame) {
-      const id         = frame.id;
-      const isSelected = state.selectedIds.has(id);
-      const isOpen     = state.openOverrideId === id;
-
-      card.classList.toggle("is-selected", isSelected);
-
-      // Name & dims
-      const nameEl = card.querySelector(".frame-name");
-      if (nameEl) nameEl.textContent = frame.name;
-
-      const dimsEl = card.querySelector(".frame-dims");
-      if (dimsEl) dimsEl.innerHTML = buildDimsHTML(frame);
-
-      // Order badge
-      const thumb = card.querySelector(".frame-thumb");
-      if (thumb) {
-        const existing = thumb.querySelector(".order-badge");
-        if (existing) existing.remove();
-        const order = getSelectionOrder(id);
-        if (order !== null) {
-          const badge = document.createElement("div");
-          badge.className = "order-badge";
-          badge.setAttribute("aria-label", `Page order: ${order}`);
-          badge.textContent = order;
-          thumb.appendChild(badge);
+      @keyframes toastOut {
+        from {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateY(-8px);
+          opacity: 0;
         }
       }
 
-      // Checkbox aria
-      const cb = card.querySelector(".frame-checkbox");
-      if (cb) cb.setAttribute("aria-checked", String(isSelected));
-
-      // Settings trigger state
-      const trigger = card.querySelector(".settings-trigger");
-      if (trigger) trigger.classList.toggle("is-open", isOpen);
-
-      // Override drawer
-      const existingDrawer = card.querySelector(".override-drawer");
-      if (isOpen && !existingDrawer) {
-        card.appendChild(buildOverrideDrawer(frame.id));
-      } else if (!isOpen && existingDrawer) {
-        existingDrawer.remove();
+      /* ── MISC ── */
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 2px 0;
       }
-    }
+      .label {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .btn-text {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        padding: 3px 8px;
+        border-radius: var(--r-xs);
+        transition:
+          color 0.15s,
+          background 0.15s;
+      }
+      .btn-text:hover {
+        color: var(--ink);
+        background: var(--surface2);
+      }
+      .btn-text.danger:hover {
+        color: var(--red);
+        background: var(--red-bg);
+      }
 
-    function populateFrameCard(card, frame) {
-      const id         = frame.id;
-      const isSelected = state.selectedIds.has(id);
-      const isOpen     = state.openOverrideId === id;
-      const b64        = getThumbB64(frame);
-      const order      = getSelectionOrder(id);
+      /* ── UNLOCK HINT (doc tab) ── */
+      .unlock-hint {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 28px 20px;
+        text-align: center;
+      }
+      .unlock-hint-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--r-lg);
+        background: var(--brand-xlight);
+        border: 1.5px solid var(--brand-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--brand);
+        font-size: 20px;
+      }
+      .unlock-hint-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .unlock-hint-desc {
+        font-size: 11px;
+        color: var(--subtle);
+        line-height: 1.5;
+        max-width: 200px;
+      }
 
-      card.classList.toggle("is-selected", isSelected);
-
-      card.innerHTML = `
-        <div class="frame-card-body">
-          <div class="drag-handle" role="img" aria-label="Drag to reorder" title="Drag to reorder">
-            <i class="ri-drag-move-2-line" aria-hidden="true"></i>
-          </div>
-          <div class="frame-checkbox" role="checkbox" aria-checked="${isSelected}" aria-label="Select frame ${frame.name}">
-            <i class="ri-check-line" aria-hidden="true"></i>
-          </div>
-          <div class="frame-thumb">
-            ${b64 ? `<img src="data:image/png;base64,${b64}" alt="Thumbnail of ${frame.name}" loading="lazy">` : `<i class="ri-image-line frame-thumb-placeholder" aria-hidden="true"></i>`}
-            ${order !== null ? `<div class="order-badge" aria-label="Page ${order}">${order}</div>` : ""}
-          </div>
-          <div class="frame-meta">
-            <div class="frame-name">${frame.name}</div>
-            <div class="frame-dims">${buildDimsHTML(frame)}</div>
-          </div>
-          <button class="settings-trigger${isOpen ? " is-open" : ""}"
-            aria-label="Per-frame overrides for ${frame.name}"
-            aria-expanded="${isOpen}"
-            data-trigger-id="${id}"
-            title="Override settings">
-            <i class="ri-settings-4-line" aria-hidden="true"></i>
-          </button>
+      /* ── SETTINGS COLLAPSED ── */
+      .adv-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 14px;
+        cursor: pointer;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        transition:
+          color 0.15s,
+          background 0.15s;
+        flex-shrink: 0;
+        background: var(--surface2);
+      }
+      .adv-toggle:hover {
+        color: var(--ink);
+        background: var(--surface);
+      }
+      .adv-toggle i.toggle-chevron {
+        font-size: 14px;
+        transition: transform 0.2s var(--ease);
+      }
+      .adv-toggle.is-open i.toggle-chevron {
+        transform: rotate(180deg);
+      }
+      .adv-body {
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.3s var(--ease);
+        display: flex;
+        flex-direction: column;
+      }
+      .adv-body.is-open {
+        max-height: 400px;
+      }
+      .adv-inner {
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        border-top: 1px solid var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── HEADER ── -->
+    <header id="app-header">
+      <div class="header-brand">
+        <div class="header-logo">
+          <!-- Original FrameStack Logo Path, scaled into 18x18 viewBox -->
+          <svg
+            viewBox="0 0 510 510"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect width="510" height="510" rx="80" fill="#0014D1" />
+            <path
+              d="M121.642 88.334C112.458 88.334 105 95.7348 105 104.864V405.138C105 414.079 112.413 421.668 121.557 421.668H388.443C397.585 421.668 405 414.149 405 404.876L404.995 171.667L321.667 88.334H121.642ZM230 180.001H263.333C263.333 221.5 299.06 266.007 343.603 280.856L335.977 313.168C283.723 305.703 229.702 328.008 180.912 360.536L161.255 333.653C179.358 319.171 196.715 294.596 209.583 265.891C222.405 237.289 230 206.292 230 180.001ZM240 279.527C244.455 269.587 248.405 259.272 251.728 248.809C259.59 260.886 269.255 271.971 280.17 281.589C263.807 284.519 247.777 289.328 232.255 295.461C235 290.239 237.585 284.914 240 279.527Z"
+              fill="white"
+            />
+          </svg>
         </div>
-        ${isOpen ? buildOverrideDrawerHTML(id) : ""}
-      `;
+        <div class="header-wordmark">
+          <span class="wordmark-name">FrameStack PDF</span>
+          <span class="wordmark-tag">by Salkom Design Studio</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button
+          id="btn-theme"
+          class="icon-btn"
+          title="Toggle theme"
+          aria-label="Toggle dark mode"
+        >
+          <i class="ri-moon-clear-line"></i>
+        </button>
+        <button
+          id="btn-close"
+          class="icon-btn"
+          title="Close plugin"
+          aria-label="Close plugin"
+        >
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+    </header>
 
-      attachFrameCardEvents(card, id);
-    }
+    <!-- ── PROGRESSIVE NAV ── -->
+    <nav id="app-nav" role="tablist" aria-label="Plugin steps">
+      <button
+        class="nav-step is-active"
+        role="tab"
+        data-tab="select"
+        aria-selected="true"
+        id="tab-select"
+      >
+        <span class="nav-step-num" id="num-select">1</span>
+        Select
+      </button>
+      <span class="nav-divider"><i class="ri-arrow-right-s-line"></i></span>
+      <button
+        class="nav-step is-locked"
+        role="tab"
+        data-tab="document"
+        aria-selected="false"
+        id="tab-document"
+        aria-disabled="true"
+      >
+        <span class="nav-step-num" id="num-document">2</span>
+        Document
+        <span class="nav-unlock-badge" id="doc-unlock-badge">Select first</span>
+      </button>
+      <span class="nav-divider"><i class="ri-arrow-right-s-line"></i></span>
+      <button
+        class="nav-step is-locked"
+        role="tab"
+        data-tab="history"
+        aria-selected="false"
+        id="tab-history"
+        aria-disabled="true"
+      >
+        <span class="nav-step-num" id="num-history">3</span>
+        History
+      </button>
+    </nav>
 
-    function buildDimsHTML(frame) {
-      const over = state.frameOverrides[frame.id] || {};
-      let html = `${Math.round(frame.width)} × ${Math.round(frame.height)} px`;
-      if (over.sizeMode && over.sizeMode !== "inherit") {
-        html += `<span class="override-tag">${over.sizeMode.toUpperCase()}</span>`;
-      }
-      if (over.bleed) html += `<span class="bleed-tag">BLEED</span>`;
-      return html;
-    }
-
-    function buildOverrideDrawerHTML(id) {
-      const over = state.frameOverrides[id] || { sizeMode: "inherit", padding: "inherit", bleed: false };
-      const mkOpt = (v, l, cur) => `<option value="${v}"${cur === v ? " selected" : ""}>${l}</option>`;
-      return `
-        <div class="override-drawer">
-          <div class="override-col">
-            <label class="override-label" for="over-size-${id}">Size Override</label>
-            <select id="over-size-${id}" data-override-id="${id}" data-override-key="sizeMode">
-              ${mkOpt("inherit","Inherit (Global)", over.sizeMode)}
-              ${mkOpt("original","Original Canvas", over.sizeMode)}
-              ${mkOpt("a4","A4 Standard", over.sizeMode)}
-              ${mkOpt("letter","US Letter", over.sizeMode)}
-            </select>
+    <!-- ── BODY ── -->
+    <main id="app-body">
+      <!-- ── STEP 1: SELECT ── -->
+      <section
+        id="panel-select"
+        class="tab-panel is-active"
+        role="tabpanel"
+        aria-labelledby="tab-select"
+      >
+        <!-- Presets + Settings -->
+        <div class="panel-inner" style="flex: 0; padding-bottom: 0; gap: 12px">
+          <div>
+            <div class="sec-label">
+              <i class="ri-magic-line"></i> Quick Presets
+            </div>
+            <div class="preset-row" id="presets-row"></div>
           </div>
-          <div class="override-col">
-            <label class="override-label" for="over-pad-${id}">Margin (mm)</label>
-            <select id="over-pad-${id}" data-override-id="${id}" data-override-key="padding">
-              ${["inherit","0","4","8","12","16"].map(v => mkOpt(v, v === "inherit" ? "Inherit" : v + " mm", String(over.padding))).join("")}
-            </select>
-          </div>
-          <div class="override-col" style="justify-content:flex-end;display:flex;flex-direction:column;padding-bottom:4px;">
-            <div class="bleed-row">
-              <input type="checkbox" id="over-bleed-${id}" data-override-id="${id}" data-override-key="bleed" ${over.bleed ? "checked" : ""}>
-              <label for="over-bleed-${id}" class="override-label" style="text-transform:uppercase;">Bleed Crop</label>
+        </div>
+
+        <!-- Advanced toggle -->
+        <button
+          class="adv-toggle"
+          id="btn-adv-toggle"
+          aria-expanded="false"
+          aria-controls="adv-body"
+        >
+          <span style="display: flex; align-items: center; gap: 6px">
+            <i class="ri-settings-3-line" style="font-size: 13px"></i>
+            Advanced Settings
+          </span>
+          <i class="ri-arrow-down-s-line toggle-chevron"></i>
+        </button>
+        <div class="adv-body" id="adv-body" aria-hidden="true">
+          <div class="adv-inner">
+            <div>
+              <div class="sec-label">
+                <i class="ri-file-3-line"></i> Page Size
+              </div>
+              <div class="seg-group" id="seg-sizes"></div>
+            </div>
+            <div>
+              <div class="sec-label">
+                <i class="ri-compress-line"></i> Quality
+              </div>
+              <div class="seg-group" id="seg-compression"></div>
+            </div>
+            <div id="margin-row">
+              <div class="sec-label" style="justify-content: space-between">
+                <span><i class="ri-layout-grid-line"></i> Margins</span>
+                <span class="margin-badge" id="margin-value-badge">10 mm</span>
+              </div>
+              <div class="slider-wrap">
+                <input
+                  type="range"
+                  id="margin-slider"
+                  min="0"
+                  max="30"
+                  step="1"
+                  value="10"
+                  aria-label="Margin size"
+                  aria-valuemin="0"
+                  aria-valuemax="30"
+                  aria-valuenow="10"
+                />
+              </div>
+            </div>
+            <div class="est-bar">
+              <span class="est-label"
+                ><i class="ri-database-2-line"></i> Estimated size</span
+              >
+              <span class="est-value" id="est-size">— KB</span>
+              <span class="badge-neutral" id="est-reduction">Lossless</span>
             </div>
           </div>
-        </div>`;
-    }
+        </div>
 
-    function buildOverrideDrawer(id) {
-      const wrapper = document.createElement("div");
-      wrapper.innerHTML = buildOverrideDrawerHTML(id);
-      return wrapper.firstElementChild;
-    }
+        <!-- Frame list toolbar -->
+        <div class="frames-toolbar">
+          <div class="sec-label" style="margin-bottom: 0">
+            <i class="ri-stack-line"></i> Frames
+          </div>
+          <button class="btn-select-all" id="btn-select-all">Select All</button>
+        </div>
 
-    // ──────────────────────────────────────────────────────────
-    // FRAME CARD EVENT DELEGATION helpers
-    // ──────────────────────────────────────────────────────────
-    function attachFrameCardEvents(card, id) {
-      // DnD
-      card.addEventListener("dragstart", onDragStart, { passive: false });
-      card.addEventListener("dragover",  onDragOver,  { passive: false });
-      card.addEventListener("dragleave", onDragLeave);
-      card.addEventListener("drop",      onDrop,      { passive: false });
-      card.addEventListener("dragend",   onDragEnd);
-    }
+        <!-- Frames -->
+        <div
+          style="
+            padding: 8px 14px 14px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          "
+        >
+          <div id="frame-list" role="list" aria-label="Frames to export"></div>
+        </div>
+      </section>
 
-    // ──────────────────────────────────────────────────────────
-    // EVENT DELEGATION on #frame-list
-    // ──────────────────────────────────────────────────────────
-    document.getElementById("frame-list").addEventListener("click", onFrameListClick);
-    document.getElementById("frame-list").addEventListener("change", onFrameListChange);
+      <!-- ── STEP 2: DOCUMENT ── -->
+      <section
+        id="panel-document"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-document"
+      >
+        <!-- Locked state -->
+        <div class="unlock-hint" id="doc-locked-view">
+          <div class="unlock-hint-icon"><i class="ri-lock-2-line"></i></div>
+          <div class="unlock-hint-title">Select frames first</div>
+          <div class="unlock-hint-desc">
+            Pick at least one frame in Step 1 to configure document settings.
+          </div>
+        </div>
 
-    function onFrameListClick(e) {
-      // Settings trigger
-      const trigger = e.target.closest(".settings-trigger");
-      if (trigger) {
-        const tid = trigger.dataset.triggerId;
-        state.openOverrideId = state.openOverrideId === tid ? null : tid;
-        renderFrameList();
-        return;
-      }
-
-      // Drag handle — don't toggle selection
-      if (e.target.closest(".drag-handle")) return;
-
-      // Override drawer controls
-      if (e.target.closest(".override-drawer")) return;
-
-      // Card body click → toggle selection
-      const cardBody = e.target.closest(".frame-card-body");
-      if (cardBody) {
-        const card = cardBody.closest(".frame-card");
-        const id   = card?.dataset.id;
-        if (!id) return;
-        if (state.selectedIds.has(id)) state.selectedIds.delete(id);
-        else state.selectedIds.add(id);
-        updateFrameCard(card, state.frames.find(f => f.id === id));
-        syncUI();
-      }
-    }
-
-    function onFrameListChange(e) {
-      const sel = e.target;
-      if (sel.dataset.overrideId && sel.dataset.overrideKey) {
-        const id  = sel.dataset.overrideId;
-        const key = sel.dataset.overrideKey;
-        let val = sel.type === "checkbox" ? sel.checked : sel.value;
-        if (key === "padding" && val !== "inherit") val = parseInt(val, 10);
-        if (!state.frameOverrides[id]) {
-          state.frameOverrides[id] = { sizeMode: "inherit", padding: "inherit", bleed: false };
-        }
-        state.frameOverrides[id][key] = val;
-        // Only re-render dims label, not full list
-        const card = document.querySelector(`.frame-card[data-id="${id}"]`);
-        if (card) {
-          const dimsEl = card.querySelector(".frame-dims");
-          if (dimsEl) dimsEl.innerHTML = buildDimsHTML(state.frames.find(f => f.id === id));
-        }
-        syncEstimator();
-      }
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // DRAG & DROP
-    // ──────────────────────────────────────────────────────────
-    function getCardId(e) { return e.currentTarget?.dataset?.id || null; }
-
-    function onDragStart(e) {
-      const id = e.currentTarget.dataset.id;
-      state.dragSourceId = id;
-      e.currentTarget.classList.add("is-dragging");
-      e.dataTransfer.effectAllowed = "move";
-      // Transparent drag image
-      const ghost = new Image();
-      ghost.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-      e.dataTransfer.setDragImage(ghost, 0, 0);
-    }
-
-    function onDragOver(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      const id = e.currentTarget.dataset.id;
-      if (id !== state.dragSourceId) e.currentTarget.classList.add("is-drag-over");
-    }
-
-    function onDragLeave(e) {
-      e.currentTarget.classList.remove("is-drag-over");
-    }
-
-    function onDrop(e) {
-      e.preventDefault();
-      const target = e.currentTarget;
-      target.classList.remove("is-drag-over");
-      const srcId = state.dragSourceId;
-      const trgId = target.dataset.id;
-      if (!srcId || srcId === trgId) return;
-
-      const srcIdx = state.orderedIds.indexOf(srcId);
-      const trgIdx = state.orderedIds.indexOf(trgId);
-      if (srcIdx === -1 || trgIdx === -1) return;
-
-      state.orderedIds.splice(srcIdx, 1);
-      state.orderedIds.splice(trgIdx, 0, srcId);
-      renderFrameList();
-      syncUI();
-    }
-
-    function onDragEnd(e) {
-      e.currentTarget.classList.remove("is-dragging");
-      state.dragSourceId = null;
-      document.querySelectorAll(".is-drag-over").forEach(el => el.classList.remove("is-drag-over"));
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // HISTORY RENDER
-    // ──────────────────────────────────────────────────────────
-    function renderHistory() {
-      const list  = document.getElementById("history-list");
-      const empty = document.getElementById("history-empty");
-
-      if (state.historyLogs.length === 0) {
-        list.hidden  = true;
-        empty.hidden = false;
-        list.innerHTML = "";
-        return;
-      }
-
-      empty.hidden = true;
-      list.hidden  = false;
-      list.innerHTML = "";
-
-      state.historyLogs.forEach(log => {
-        const item = document.createElement("div");
-        item.className = "history-card";
-        item.setAttribute("role", "listitem");
-        item.innerHTML = `
-          <div class="flex items-center gap-2" style="gap:12px;flex:1;min-width:0;">
-            <div class="history-icon" aria-hidden="true"><i class="ri-file-pdf-fill"></i></div>
-            <div style="flex:1;min-width:0;">
-              <div class="history-name" title="${log.fileName}">${log.fileName}</div>
-              <div class="history-meta">${log.timestamp} · ${log.presetName}</div>
+        <!-- Unlocked content -->
+        <div class="panel-inner" id="doc-unlocked-view" style="display: none">
+          <!-- Cover Page -->
+          <div class="doc-block">
+            <div class="doc-block-head">
+              <div class="doc-block-title">
+                <i class="ri-layout-masonry-line"></i> Cover Page
+              </div>
+              <label class="toggle-wrap">
+                <div class="toggle">
+                  <input
+                    type="checkbox"
+                    id="toggle-cover"
+                    role="switch"
+                    aria-checked="false"
+                  />
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </div>
+              </label>
+            </div>
+            <div class="doc-block-body" id="cover-controls" hidden>
+              <div class="field-row">
+                <div class="field-label">TITLE</div>
+                <input
+                  type="text"
+                  id="cover-title"
+                  placeholder="Project title…"
+                  value="FrameStack Export Delivery"
+                />
+              </div>
+              <div class="field-row">
+                <div class="field-label">SUBTITLE</div>
+                <input
+                  type="text"
+                  id="cover-subtitle"
+                  placeholder="Subtitle or date…"
+                  value="Design layout specifications"
+                />
+              </div>
+              <div>
+                <div class="field-label" style="margin-bottom: 8px">STYLE</div>
+                <div class="cover-themes" id="cover-themes">
+                  <button
+                    class="cover-theme-btn"
+                    data-theme="minimal"
+                    aria-pressed="true"
+                  >
+                    <div
+                      class="theme-preview"
+                      style="background: #f8fafc; border: 1px solid #e2e8f0"
+                    ></div>
+                    Minimal
+                  </button>
+                  <button
+                    class="cover-theme-btn"
+                    data-theme="bold"
+                    aria-pressed="false"
+                  >
+                    <div
+                      class="theme-preview"
+                      style="background: #0b0f1a"
+                    ></div>
+                    Bold
+                  </button>
+                  <button
+                    class="cover-theme-btn"
+                    data-theme="stripe"
+                    aria-pressed="false"
+                  >
+                    <div
+                      class="theme-preview"
+                      style="
+                        background: #fff;
+                        border-left: 5px solid #0014d1;
+                        border: 1px solid #e2e8f0;
+                      "
+                    ></div>
+                    Stripe
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="flex items-center" style="gap:6px;flex-shrink:0;">
-            <span class="badge-sm badge-neutral-sm">${log.pages} pgs</span>
-            <span class="badge-sm badge-green-sm">${log.size}</span>
-            <button class="btn-redownload" data-log-id="${log.id}" aria-label="Re-download ${log.fileName}" title="Re-download PDF">
-              <i class="ri-download-cloud-2-line" aria-hidden="true"></i>
+
+          <!-- Metadata -->
+          <div class="doc-block">
+            <div class="doc-block-head">
+              <div class="doc-block-title">
+                <i class="ri-information-line"></i> PDF Metadata
+              </div>
+            </div>
+            <div class="doc-block-body">
+              <div class="field-2col">
+                <div class="field-row">
+                  <div class="field-label">DOCUMENT TITLE</div>
+                  <input
+                    type="text"
+                    id="meta-title"
+                    value="FrameStack PDF Export"
+                  />
+                </div>
+                <div class="field-row">
+                  <div class="field-label">AUTHOR</div>
+                  <input
+                    type="text"
+                    id="meta-author"
+                    value="Salkom Design Studio"
+                  />
+                </div>
+              </div>
+              <div class="field-row">
+                <div class="field-label">SUBJECT</div>
+                <input type="text" id="meta-subject" value="Design Delivery" />
+              </div>
+              <div class="field-row">
+                <div class="field-label">KEYWORDS</div>
+                <input
+                  type="text"
+                  id="meta-keywords"
+                  value="figma, pdf, framestack, salkom"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── STEP 3: HISTORY ── -->
+      <section
+        id="panel-history"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-history"
+      >
+        <div class="panel-inner">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            "
+          >
+            <div class="sec-label" style="margin-bottom: 0">
+              <i class="ri-history-line"></i> Export History
+            </div>
+            <button class="btn-text danger" id="btn-clear-history">
+              Clear All
             </button>
           </div>
-        `;
-        list.appendChild(item);
-      });
-    }
+          <div
+            id="history-list"
+            style="display: flex; flex-direction: column; gap: 6px"
+          ></div>
+        </div>
+      </section>
 
-    // ──────────────────────────────────────────────────────────
-    // SYNC UI (lightweight — no full re-renders unless needed)
-    // ──────────────────────────────────────────────────────────
-    function syncUI() {
-      renderPresets();
-      renderSegmented("seg-sizes",       SIZE_OPTIONS,        state.sizeMode,        "sizeMode");
-      renderSegmented("seg-compression", COMPRESSION_OPTIONS, state.compressionMode, "compression");
+      <!-- ── EXPORT OVERLAY ── -->
+      <div
+        id="export-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Export in progress"
+        aria-live="polite"
+      >
+        <div class="export-card">
+          <div class="export-ring">
+            <svg viewBox="0 0 60 60">
+              <circle class="export-ring-track" cx="30" cy="30" r="24" />
+              <circle
+                class="export-ring-fill"
+                id="ring-fill"
+                cx="30"
+                cy="30"
+                r="24"
+                stroke-dasharray="150.796"
+                stroke-dashoffset="150.796"
+              />
+            </svg>
+            <div class="export-ring-pct" id="overlay-percent">0%</div>
+          </div>
+          <div class="export-title">Compiling PDF</div>
+          <div class="export-status" id="overlay-status">Staging assets…</div>
+          <div
+            class="export-progress-bar"
+            role="progressbar"
+            aria-valuenow="0"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            id="overlay-progress-bar"
+          >
+            <div class="export-progress-fill" id="overlay-progress-fill"></div>
+          </div>
+          <div class="export-stage">Enterprise Compression Pipeline</div>
+          <button id="btn-cancel-export" class="btn-cancel">
+            Cancel Export
+          </button>
+        </div>
+      </div>
+    </main>
 
-      const selectedCount = state.selectedIds.size;
-      const totalCount    = state.frames.length;
+    <!-- ── FOOTER ── -->
+    <footer id="app-footer" role="contentinfo">
+      <div class="footer-left">
+        <div class="footer-eyebrow">Ready to export</div>
+        <div id="footer-count" class="footer-count" aria-live="polite">
+          0 frames selected
+        </div>
+      </div>
+      <button
+        id="btn-export"
+        class="btn-export"
+        disabled
+        aria-describedby="footer-count"
+      >
+        <i class="ri-file-pdf-2-line"></i>
+        Export PDF
+      </button>
+    </footer>
 
-      document.getElementById("selection-summary").textContent = `${selectedCount} of ${totalCount} selected`;
-      document.getElementById("footer-count").textContent      = `${selectedCount} / ${totalCount} Selected`;
+    <!-- ── TOAST MOUNT ── -->
+    <div
+      id="toast-root"
+      aria-live="assertive"
+      aria-atomic="true"
+      role="status"
+    ></div>
 
-      document.getElementById("btn-select-all").textContent =
-        (totalCount > 0 && selectedCount === totalCount) ? "Deselect All" : "Select All";
+    <!-- ══════════════════════════════════════════════════════════
+       APPLICATION LOGIC
+       ══════════════════════════════════════════════════════════ -->
+    <script>
+      (function () {
+        "use strict";
 
-      const exportBtn = document.getElementById("btn-export");
-      exportBtn.disabled = selectedCount === 0;
+        /* ── CONSTANTS ── */
+        const COMPRESSION_QUALITY = {
+          none: null,
+          low: 0.96,
+          average: 0.85,
+          high: 0.72,
+        };
+        const COMPRESSION_FACTORS = {
+          none: 1.0,
+          low: 0.87,
+          average: 0.55,
+          high: 0.35,
+        };
+        const PAGE_DIMS = {
+          a4: { w: 210, h: 297 },
+          letter: { w: 215.9, h: 279.4 },
+        };
+        const PX_TO_MM = 0.264583;
+        const MAX_HISTORY = 15;
+        const HISTORY_LOG_KEY = "framestack_history_logs";
 
-      // Margin slider
-      const slider = document.getElementById("margin-slider");
-      slider.value    = state.padding;
-      slider.disabled = state.sizeMode === "original";
-      document.getElementById("margin-value-badge").textContent = `${state.padding} mm`;
-      slider.setAttribute("aria-valuenow", state.padding);
+        const PRESETS = [
+          {
+            id: "ux-case-study",
+            name: "UX Case Study",
+            sizeMode: "original",
+            compressionMode: "average",
+            padding: 0,
+            icon: "ri-file-text-line",
+          },
+          {
+            id: "client-review",
+            name: "Client Review",
+            sizeMode: "letter",
+            compressionMode: "low",
+            padding: 12,
+            icon: "ri-checkbox-circle-line",
+          },
+          {
+            id: "behance-slides",
+            name: "Portfolio",
+            sizeMode: "a4",
+            compressionMode: "high",
+            padding: 10,
+            icon: "ri-compass-3-line",
+          },
+          {
+            id: "dev-handoff",
+            name: "Dev Handoff",
+            sizeMode: "original",
+            compressionMode: "none",
+            padding: 0,
+            icon: "ri-code-line",
+          },
+        ];
 
-      syncEstimator();
-    }
+        const SIZE_OPTIONS = [
+          { v: "original", l: "Original" },
+          { v: "a4", l: "A4" },
+          { v: "letter", l: "Letter" },
+        ];
+        const COMPRESSION_OPTIONS = [
+          { v: "none", l: "Lossless" },
+          { v: "low", l: "Low" },
+          { v: "average", l: "Balanced" },
+          { v: "high", l: "Max" },
+        ];
 
-    function syncEstimator() {
-      const rawBytes   = estimateRawBytes();
-      const factor     = COMPRESSION_FACTORS[state.compressionMode] ?? 1;
-      const finalBytes = Math.round(rawBytes * factor);
-      const pct        = rawBytes > 0 ? Math.round(((rawBytes - finalBytes) / rawBytes) * 100) : 0;
+        /* ── STATE ── */
+        const state = {
+          frames: [],
+          orderedIds: [],
+          selectedIds: new Set(),
+          frameOverrides: {},
+          openOverrideId: null,
+          dragSourceId: null,
+          sizeMode: "original",
+          compressionMode: "average",
+          padding: 10,
+          activePresetId: "",
+          activeTab: "select",
+          exporting: false,
+          exportQueue: [],
+          exportIndex: 0,
+          exportTotalBytes: 0,
+          historyLogs: [],
+        };
+        let _pdf = null;
 
-      document.getElementById("est-size").textContent = `${formatBytes(rawBytes)} → ${formatBytes(finalBytes)}`;
-
-      const redEl = document.getElementById("est-reduction");
-      if (pct > 0) {
-        redEl.className   = "badge-green";
-        redEl.textContent = `-${pct}% Saved`;
-      } else {
-        redEl.className   = "badge-neutral";
-        redEl.textContent = "Lossless";
-      }
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // TAB SWITCHING
-    // ──────────────────────────────────────────────────────────
-    function switchTab(tabId) {
-      document.querySelectorAll(".tab-btn").forEach(btn => {
-        const active = btn.dataset.tab === tabId;
-        btn.setAttribute("aria-selected", String(active));
-      });
-      document.querySelectorAll(".tab-panel").forEach(panel => {
-        panel.classList.toggle("is-active", panel.id === `panel-${tabId}`);
-      });
-      if (tabId === "history") renderHistory();
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // EXPORT PIPELINE
-    // ──────────────────────────────────────────────────────────
-    function startExport() {
-      const queue = state.orderedIds.filter(id => state.selectedIds.has(id));
-      if (!queue.length) return;
-
-      _pdf = null;
-      state.exporting        = true;
-      state.exportQueue      = queue;
-      state.exportIndex      = 0;
-      state.exportTotalBytes = 0;
-
-      setOverlayProgress(0, `Staging page 1 of ${queue.length}…`);
-      document.getElementById("export-overlay").classList.add("is-active");
-
-      postToPlugin({ type: "EXPORT_SINGLE_FRAME", id: queue[0] });
-    }
-
-    function setOverlayProgress(pct, statusText) {
-      document.getElementById("overlay-percent").textContent = `${pct}%`;
-      document.getElementById("overlay-status").textContent  = statusText;
-      document.getElementById("overlay-progress-fill").style.width = `${pct}%`;
-      document.getElementById("overlay-progress-bar").setAttribute("aria-valuenow", pct);
-    }
-
-    function cancelExport() {
-      state.exporting = false;
-      _pdf = null;
-      document.getElementById("export-overlay").classList.remove("is-active");
-    }
-
-    async function processSingleFrameReady(msg) {
-      if (!state.exporting) return;
-
-      const queue = state.exportQueue;
-      const idx   = state.exportIndex;
-      if (msg.id !== queue[idx]) return; // stale message guard
-
-      try {
-        const { jsPDF }        = window.jspdf;
-        const useJpeg          = state.compressionMode !== "none";
-        const quality          = COMPRESSION_QUALITY[state.compressionMode];
-        const b64              = btoa(msg.imageBinary);
-
-        let imgUrl;
-        if (useJpeg) {
-          imgUrl = await pngToJpeg(b64, quality);
-        } else {
-          imgUrl = "data:image/png;base64," + b64;
+        /* ── PLUGIN BRIDGE ── */
+        function postToPlugin(msg) {
+          try {
+            parent.postMessage({ pluginMessage: msg }, "*");
+          } catch (e) {}
         }
 
-        const addedBytes = Math.round(imgUrl.length * 0.75);
-        state.exportTotalBytes += addedBytes;
-
-        // Resolve size for this page
-        const over     = state.frameOverrides[msg.id] || {};
-        const sizeMode = over.sizeMode && over.sizeMode !== "inherit" ? over.sizeMode : state.sizeMode;
-        const padding  = (over.padding != null && over.padding !== "inherit") ? over.padding : state.padding;
-        const hasBleed = !!over.bleed;
-
-        let pdfW, pdfH;
-        if (sizeMode === "a4") {
-          pdfW = PAGE_DIMS.a4.w; pdfH = PAGE_DIMS.a4.h;
-        } else if (sizeMode === "letter") {
-          pdfW = PAGE_DIMS.letter.w; pdfH = PAGE_DIMS.letter.h;
-        } else {
-          pdfW = msg.width  * PX_TO_MM;
-          pdfH = msg.height * PX_TO_MM;
+        /* ── TOAST ── */
+        const toastTimers = new Map();
+        function showToast(message, type = "info") {
+          const root = document.getElementById("toast-root");
+          const el = document.createElement("div");
+          const icon = {
+            success: "ri-checkbox-circle-fill",
+            error: "ri-error-warning-fill",
+            info: "ri-information-line",
+          };
+          el.className = `toast toast-${type}`;
+          el.innerHTML = `<i class="${icon[type] || icon.info}"></i><span style="flex:1">${message}</span><button class="toast-close" aria-label="Dismiss"><i class="ri-close-line"></i></button>`;
+          el.querySelector(".toast-close").addEventListener("click", () =>
+            dismissToast(el),
+          );
+          root.appendChild(el);
+          const tid = window.setTimeout(() => dismissToast(el), 4200);
+          toastTimers.set(el, tid);
         }
-
-        const orientation = pdfW >= pdfH ? "landscape" : "portrait";
-        const fmt         = sizeMode === "original" ? [pdfW, pdfH] : sizeMode;
-
-        // Initialise or add page
-        if (!_pdf) {
-          const coverEnabled = document.getElementById("toggle-cover").checked;
-          _pdf = new jsPDF({ orientation, unit: "mm", format: fmt });
-          if (coverEnabled) {
-            addCoverPage(_pdf, pdfW, pdfH);
-            _pdf.addPage(fmt, orientation);
+        function dismissToast(el) {
+          if (!el.parentNode) return;
+          const tid = toastTimers.get(el);
+          if (tid) {
+            clearTimeout(tid);
+            toastTimers.delete(el);
           }
-        } else {
-          _pdf.addPage(fmt, orientation);
+          el.classList.add("is-leaving");
+          el.addEventListener("animationend", () => el.remove(), {
+            once: true,
+          });
         }
 
-        // Draw image on page
-        if (sizeMode === "original") {
-          _pdf.addImage(imgUrl, useJpeg ? "JPEG" : "PNG", 0, 0, pdfW, pdfH);
-        } else {
-          const maxW  = pdfW - padding * 2;
-          const maxH  = pdfH - padding * 2;
-          const asp   = msg.width / msg.height;
-          const bAsp  = maxW / maxH;
-          const dW    = asp > bAsp ? maxW : maxH * asp;
-          const dH    = asp > bAsp ? maxW / asp : maxH;
-          const rx    = padding + (maxW - dW) / 2;
-          const ry    = padding + (maxH - dH) / 2;
-
-          _pdf.addImage(imgUrl, useJpeg ? "JPEG" : "PNG", rx, ry, dW, dH);
-
-          if (hasBleed) drawBleedMarks(_pdf, rx, ry, dW, dH);
+        /* ── UTILS ── */
+        function formatBytes(b) {
+          if (!b) return "0 KB";
+          if (b < 1024) return b + " B";
+          if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+          return (b / 1048576).toFixed(2) + " MB";
+        }
+        function slugify(str) {
+          return str
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+        }
+        const thumbCache = new Map();
+        function getThumbB64(frame) {
+          if (!frame.thumbnailBinary) return null;
+          if (thumbCache.has(frame.id)) return thumbCache.get(frame.id);
+          try {
+            const b64 = btoa(frame.thumbnailBinary);
+            thumbCache.set(frame.id, b64);
+            return b64;
+          } catch {
+            return null;
+          }
+        }
+        function clearThumbCache(ids) {
+          ids.forEach((id) => thumbCache.delete(id));
+        }
+        function pngToJpeg(b64, quality) {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              const c = document.createElement("canvas");
+              c.width = img.width;
+              c.height = img.height;
+              const ctx = c.getContext("2d");
+              if (!ctx) {
+                reject(new Error("Canvas context failed"));
+                return;
+              }
+              ctx.fillStyle = "#fff";
+              ctx.fillRect(0, 0, c.width, c.height);
+              ctx.drawImage(img, 0, 0);
+              resolve(c.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = () => reject(new Error("Image decode failed"));
+            img.src = "data:image/png;base64," + b64;
+          });
+        }
+        function estimateRawBytes() {
+          let total = 0;
+          for (const id of state.orderedIds) {
+            if (!state.selectedIds.has(id)) continue;
+            const f = state.frames.find((x) => x.id === id);
+            if (f && f.thumbnailBinary) total += f.thumbnailBinary.length * 8;
+          }
+          return total;
         }
 
-        // Advance to next frame
-        const nextIdx = idx + 1;
-        const total   = queue.length;
-        const pct     = Math.round((nextIdx / total) * 100);
-        state.exportIndex = nextIdx;
-        setOverlayProgress(pct, nextIdx < total ? `Staging page ${nextIdx + 1} of ${total}…` : "Finalising…");
-
-        if (nextIdx < total) {
-          postToPlugin({ type: "EXPORT_SINGLE_FRAME", id: queue[nextIdx] });
-        } else {
-          finalisePdf(total);
+        /* ── NAV / TAB SYSTEM ── */
+        function canAccessTab(tabId) {
+          if (tabId === "select") return true;
+          if (tabId === "document") return state.selectedIds.size > 0;
+          if (tabId === "history") return true; // always accessible but shows locked hint
+          return false;
         }
 
-      } catch (err) {
-        showToast(`Export error: ${err.message}`, "error");
-        cancelExport();
-      }
-    }
+        function syncNav() {
+          const hasSelection = state.selectedIds.size > 0;
+          const tabs = ["select", "document", "history"];
 
-    function addCoverPage(pdf, w, h) {
-      const title    = document.getElementById("cover-title").value    || "FrameStack Export Delivery";
-      const subtitle = document.getElementById("cover-subtitle").value || "Design layout specifications";
-      const theme    = document.getElementById("cover-theme").value    || "minimal";
-      const date     = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+          tabs.forEach((tabId) => {
+            const btn = document.getElementById(`tab-${tabId}`);
+            const numEl = document.getElementById(`num-${tabId}`);
+            const isActive = state.activeTab === tabId;
+            const isDone =
+              (tabId === "select" && hasSelection) ||
+              (tabId === "document" &&
+                hasSelection &&
+                state.activeTab !== "document");
+            const isLocked = tabId === "document" && !hasSelection;
 
-      if (theme === "bold") {
-        pdf.setFillColor(15, 23, 42);
-        pdf.rect(0, 0, w, h, "F");
-        pdf.setFillColor(0, 20, 209);
-        pdf.rect(20, h / 2 - 28, 28, 2.5, "F");
-        pdf.setTextColor(255, 255, 255); pdf.setFont("helvetica", "bold"); pdf.setFontSize(20);
-        pdf.text(title, 20, h / 2 - 12);
-        pdf.setTextColor(148, 163, 184); pdf.setFont("helvetica", "normal"); pdf.setFontSize(10.5);
-        pdf.text(subtitle, 20, h / 2);
-        pdf.setTextColor(71, 85, 105); pdf.setFontSize(8);
-        pdf.text("Salkom Design Studio · " + date, 20, h - 18);
-      } else if (theme === "stripe") {
-        pdf.setFillColor(255, 255, 255); pdf.rect(0, 0, w, h, "F");
-        pdf.setFillColor(0, 20, 209);   pdf.rect(0, 0, 10, h, "F");
-        pdf.setTextColor(15, 23, 42);   pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
-        pdf.text(title, 26, h / 2 - 10);
-        pdf.setTextColor(100, 116, 139); pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
-        pdf.text(subtitle, 26, h / 2);
-        pdf.setTextColor(148, 163, 184); pdf.setFontSize(8.5);
-        pdf.text(date, 26, h / 2 + 10);
-      } else {
-        pdf.setFillColor(248, 250, 252); pdf.rect(0, 0, w, h, "F");
-        pdf.setTextColor(11, 15, 26);   pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
-        pdf.text(title, 20, 48);
-        pdf.setTextColor(100, 116, 139); pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
-        pdf.text(subtitle, 20, 58);
-        pdf.setTextColor(148, 163, 184); pdf.setFontSize(8);
-        pdf.text("Salkom Design Studio © " + new Date().getFullYear(), 20, h - 20);
-      }
-    }
+            btn.className =
+              "nav-step" +
+              (isActive ? " is-active" : isDone ? " is-done" : "") +
+              (isLocked ? " is-locked" : "");
+            btn.setAttribute("aria-selected", String(isActive));
+            btn.setAttribute("aria-disabled", String(isLocked));
 
-    function drawBleedMarks(pdf, rx, ry, dW, dH) {
-      pdf.setDrawColor(148, 163, 184);
-      pdf.setLineWidth(0.2);
-      const marks = [
-        [rx,      ry,      -4, 0,  4, 0 ],
-        [rx,      ry,      0,  -4, 0, 4 ],
-        [rx + dW, ry,      -4, 0,  4, 0 ],
-        [rx + dW, ry,      0,  -4, 0, 4 ],
-        [rx,      ry + dH, -4, 0,  4, 0 ],
-        [rx,      ry + dH, 0,  -4, 0, 4 ],
-        [rx + dW, ry + dH, -4, 0,  4, 0 ],
-        [rx + dW, ry + dH, 0,  -4, 0, 4 ]
-      ];
-      marks.forEach(([x, y, dx1, dy1, dx2, dy2]) => {
-        pdf.line(x + dx1, y + dy1, x + dx2, y + dy2);
-      });
-    }
+            if (isDone) {
+              numEl.innerHTML = `<i class="ri-check-line" style="font-size:10px"></i>`;
+            } else {
+              numEl.textContent =
+                tabId === "select" ? "1" : tabId === "document" ? "2" : "3";
+            }
+          });
 
-    function finalisePdf(totalPages) {
-      try {
-        const docTitle    = document.getElementById("meta-title").value    || "FrameStack PDF Export";
-        const docAuthor   = document.getElementById("meta-author").value   || "Salkom Design Studio";
-        const docSubject  = document.getElementById("meta-subject").value  || "Design Delivery";
-        const docKeywords = document.getElementById("meta-keywords").value || "figma, pdf, framestack";
+          // Unlock badge on document tab
+          const badge = document.getElementById("doc-unlock-badge");
+          if (badge) badge.style.display = hasSelection ? "none" : "";
 
-        _pdf.setProperties({
-          title:    docTitle,
-          author:   docAuthor,
-          subject:  docSubject,
-          keywords: docKeywords,
-          creator:  "FrameStack PDF · Salkom Design Studio"
+          // Document panel locked/unlocked views
+          const lockedView = document.getElementById("doc-locked-view");
+          const unlockedView = document.getElementById("doc-unlocked-view");
+          if (lockedView && unlockedView) {
+            lockedView.style.display = hasSelection ? "none" : "flex";
+            unlockedView.style.display = hasSelection ? "flex" : "none";
+          }
+        }
+
+        function switchTab(tabId) {
+          if (!canAccessTab(tabId) && tabId !== "history") return;
+          state.activeTab = tabId;
+
+          document
+            .querySelectorAll(".tab-panel")
+            .forEach((p) => p.classList.remove("is-active"));
+          const panel = document.getElementById(`panel-${tabId}`);
+          if (panel) panel.classList.add("is-active");
+
+          syncNav();
+          if (tabId === "history") renderHistory();
+        }
+
+        /* ── RENDER PRESETS ── */
+        function renderPresets() {
+          const row = document.getElementById("presets-row");
+          const existing = row.querySelectorAll(".preset-chip");
+          if (existing.length === PRESETS.length) {
+            PRESETS.forEach((p, i) =>
+              existing[i].setAttribute(
+                "aria-pressed",
+                String(state.activePresetId === p.id),
+              ),
+            );
+            return;
+          }
+          row.innerHTML = "";
+          PRESETS.forEach((p) => {
+            const btn = document.createElement("button");
+            btn.className = "preset-chip";
+            btn.dataset.presetId = p.id;
+            btn.setAttribute(
+              "aria-pressed",
+              String(state.activePresetId === p.id),
+            );
+            btn.innerHTML = `<i class="${p.icon}"></i><span>${p.name}</span>`;
+            row.appendChild(btn);
+          });
+        }
+
+        /* ── RENDER SEGMENTED ── */
+        function renderSegmented(id, options, activeValue, dataAttr) {
+          const c = document.getElementById(id);
+          if (c.children.length === options.length) {
+            Array.from(c.children).forEach((btn, i) =>
+              btn.setAttribute(
+                "aria-pressed",
+                String(options[i].v === activeValue),
+              ),
+            );
+            return;
+          }
+          c.innerHTML = "";
+          options.forEach((opt) => {
+            const btn = document.createElement("button");
+            btn.className = "seg-btn";
+            btn.textContent = opt.l;
+            btn.dataset[dataAttr] = opt.v;
+            btn.setAttribute("aria-pressed", String(opt.v === activeValue));
+            c.appendChild(btn);
+          });
+        }
+
+        /* ── FRAME CARD ── */
+        function renderFrameList() {
+          const container = document.getElementById("frame-list");
+          if (state.frames.length === 0) {
+            container.innerHTML = `<div class="state-center">
+          <div class="state-icon"><i class="ri-layouts-line"></i></div>
+          <div class="state-title">No frames selected</div>
+          <div class="state-desc">Select one or more frames in Figma to begin composing your PDF.</div>
+        </div>`;
+            return;
+          }
+          const desiredIds = state.orderedIds;
+          container.querySelectorAll(".frame-card[data-id]").forEach((el) => {
+            if (!desiredIds.includes(el.dataset.id)) el.remove();
+          });
+          let refNode = null;
+          for (let i = desiredIds.length - 1; i >= 0; i--) {
+            const id = desiredIds[i];
+            const frame = state.frames.find((f) => f.id === id);
+            if (!frame) continue;
+            let card = container.querySelector(`.frame-card[data-id="${id}"]`);
+            if (!card) {
+              card = buildFrameCard(frame);
+            } else {
+              updateFrameCard(card, frame);
+            }
+            if (refNode) {
+              container.insertBefore(card, refNode);
+            } else {
+              container.appendChild(card);
+            }
+            refNode = card;
+          }
+        }
+
+        function getSelectionOrder(id) {
+          const queue = state.orderedIds.filter((i) =>
+            state.selectedIds.has(i),
+          );
+          const idx = queue.indexOf(id);
+          return idx >= 0 ? idx + 1 : null;
+        }
+
+        function buildFrameCard(frame) {
+          const card = document.createElement("div");
+          card.className = "frame-card";
+          card.setAttribute("data-id", frame.id);
+          card.setAttribute("draggable", "true");
+          card.setAttribute("role", "listitem");
+          populateFrameCard(card, frame);
+          attachFrameCardEvents(card, frame.id);
+          return card;
+        }
+
+        function populateFrameCard(card, frame) {
+          const id = frame.id;
+          const isSelected = state.selectedIds.has(id);
+          const order = getSelectionOrder(id);
+          const b64 = getThumbB64(frame);
+
+          card.classList.toggle("is-selected", isSelected);
+
+          const thumbHtml = b64
+            ? `<img class="frame-thumb" src="data:image/png;base64,${b64}" alt="${frame.name} preview" loading="lazy">`
+            : `<div class="frame-thumb-placeholder"><i class="ri-image-2-line"></i></div>`;
+
+          card.innerHTML = `
+        <div class="frame-card-main">
+          <div class="frame-thumb-col" style="height:56px">${thumbHtml}</div>
+          <div class="frame-info-col">
+            <div class="frame-name">${frame.name}</div>
+            <div class="frame-dims">
+              <span>${frame.width}&thinsp;×&thinsp;${frame.height}</span>
+              <span class="frame-dims-dot"></span>
+              <span>${frame.width >= frame.height ? "Landscape" : "Portrait"}</span>
+            </div>
+          </div>
+          <div class="frame-actions-col">
+            ${order ? `<span class="frame-badge-order">${order}</span>` : ""}
+            <div class="frame-check-btn" aria-label="${isSelected ? "Deselect" : "Select"} frame">
+              <i class="ri-check-line"></i>
+            </div>
+            <div class="drag-handle" aria-hidden="true"><i class="ri-drag-move-2-line"></i></div>
+          </div>
+        </div>`;
+        }
+
+        function updateFrameCard(card, frame) {
+          const id = frame.id;
+          const isSelected = state.selectedIds.has(id);
+          card.classList.toggle("is-selected", isSelected);
+          const nameEl = card.querySelector(".frame-name");
+          if (nameEl) nameEl.textContent = frame.name;
+          const actCol = card.querySelector(".frame-actions-col");
+          if (actCol) {
+            const order = getSelectionOrder(id);
+            let badge = actCol.querySelector(".frame-badge-order");
+            if (order) {
+              if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "frame-badge-order";
+                actCol.insertBefore(badge, actCol.firstChild);
+              }
+              badge.textContent = order;
+            } else if (badge) {
+              badge.remove();
+            }
+            const chk = actCol.querySelector(".frame-check-btn");
+            if (chk)
+              chk.setAttribute(
+                "aria-label",
+                `${isSelected ? "Deselect" : "Select"} frame`,
+              );
+          }
+        }
+
+        function attachFrameCardEvents(card, id) {
+          // Click to toggle selection
+          card.addEventListener("click", (e) => {
+            if (e.target.closest(".drag-handle")) return;
+            state.selectedIds.has(id)
+              ? state.selectedIds.delete(id)
+              : state.selectedIds.add(id);
+            renderFrameList();
+            syncUI();
+          });
+          // Drag
+          card.addEventListener("dragstart", () => {
+            state.dragSourceId = id;
+            card.classList.add("is-dragging");
+          });
+          card.addEventListener("dragend", () => {
+            state.dragSourceId = null;
+            card.classList.remove("is-dragging");
+            document
+              .querySelectorAll(".frame-card")
+              .forEach((c) => c.classList.remove("drag-over"));
+          });
+          card.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            if (state.dragSourceId !== id) card.classList.add("drag-over");
+          });
+          card.addEventListener("dragleave", () =>
+            card.classList.remove("drag-over"),
+          );
+          card.addEventListener("drop", (e) => {
+            e.preventDefault();
+            card.classList.remove("drag-over");
+            if (!state.dragSourceId || state.dragSourceId === id) return;
+            const fromIdx = state.orderedIds.indexOf(state.dragSourceId);
+            const toIdx = state.orderedIds.indexOf(id);
+            if (fromIdx < 0 || toIdx < 0) return;
+            state.orderedIds.splice(fromIdx, 1);
+            state.orderedIds.splice(toIdx, 0, state.dragSourceId);
+            renderFrameList();
+            syncUI();
+          });
+        }
+
+        /* ── RENDER HISTORY ── */
+        function renderHistory() {
+          const list = document.getElementById("history-list");
+          if (!state.historyLogs.length) {
+            list.innerHTML = `<div class="state-center" style="padding:24px">
+          <div class="state-icon"><i class="ri-history-line"></i></div>
+          <div class="state-title">No exports yet</div>
+          <div class="state-desc">Exported PDFs will appear here with size and timestamp.</div>
+        </div>`;
+            return;
+          }
+          list.innerHTML = state.historyLogs
+            .map(
+              (log) => `
+        <div class="history-entry">
+          <div class="history-icon"><i class="ri-file-pdf-2-line"></i></div>
+          <div class="history-info">
+            <div class="history-name">${log.fileName}</div>
+            <div class="history-meta">${log.size} · ${log.pages} pages · ${log.timestamp}</div>
+          </div>
+          <button class="btn-redownload" data-log-id="${log.id}" title="Re-download" aria-label="Re-download ${log.fileName}">
+            <i class="ri-download-cloud-2-line"></i>
+          </button>
+        </div>`,
+            )
+            .join("");
+        }
+
+        /* ── SYNC UI (master) ── */
+        function syncUI() {
+          const selectedCount = state.selectedIds.size;
+          const totalCount = state.frames.length;
+
+          // Footer
+          const s =
+            selectedCount === 1
+              ? "1 frame selected"
+              : `${selectedCount} frames selected`;
+          document.getElementById("footer-count").textContent = s;
+
+          // Select All btn
+          const saBtn = document.getElementById("btn-select-all");
+          saBtn.textContent =
+            totalCount > 0 && selectedCount === totalCount
+              ? "Deselect All"
+              : "Select All";
+
+          // Export btn
+          document.getElementById("btn-export").disabled = selectedCount === 0;
+
+          // Margin slider
+          const slider = document.getElementById("margin-slider");
+          slider.value = state.padding;
+          slider.disabled = state.sizeMode === "original";
+          document.getElementById("margin-value-badge").textContent =
+            `${state.padding} mm`;
+          slider.setAttribute("aria-valuenow", state.padding);
+
+          syncEstimator();
+          syncNav();
+
+          // If no selection and on document tab, push back
+          if (selectedCount === 0 && state.activeTab === "document") {
+            switchTab("select");
+          }
+        }
+
+        function syncEstimator() {
+          const rawBytes = estimateRawBytes();
+          const factor = COMPRESSION_FACTORS[state.compressionMode] ?? 1;
+          const finalBytes = Math.round(rawBytes * factor);
+          const pct =
+            rawBytes > 0
+              ? Math.round(((rawBytes - finalBytes) / rawBytes) * 100)
+              : 0;
+          document.getElementById("est-size").textContent =
+            `${formatBytes(rawBytes)} → ${formatBytes(finalBytes)}`;
+          const redEl = document.getElementById("est-reduction");
+          if (pct > 0) {
+            redEl.className = "badge-green";
+            redEl.textContent = `-${pct}% Saved`;
+          } else {
+            redEl.className = "badge-neutral";
+            redEl.textContent = "Lossless";
+          }
+        }
+
+        /* ── EXPORT PIPELINE ── */
+        function startExport() {
+          const queue = state.orderedIds.filter((id) =>
+            state.selectedIds.has(id),
+          );
+          if (!queue.length) return;
+          _pdf = null;
+          state.exporting = true;
+          state.exportQueue = queue;
+          state.exportIndex = 0;
+          state.exportTotalBytes = 0;
+          setOverlayProgress(0, `Staging page 1 of ${queue.length}…`);
+          document.getElementById("export-overlay").classList.add("is-active");
+          postToPlugin({ type: "EXPORT_SINGLE_FRAME", id: queue[0] });
+        }
+
+        function setOverlayProgress(pct, statusText) {
+          document.getElementById("overlay-percent").textContent = `${pct}%`;
+          document.getElementById("overlay-status").textContent = statusText;
+          document.getElementById("overlay-progress-fill").style.width =
+            `${pct}%`;
+          document
+            .getElementById("overlay-progress-bar")
+            .setAttribute("aria-valuenow", pct);
+          // Ring
+          const circumference = 150.796;
+          const offset = circumference - (pct / 100) * circumference;
+          document.getElementById("ring-fill").style.strokeDashoffset = offset;
+        }
+
+        function cancelExport() {
+          state.exporting = false;
+          _pdf = null;
+          document
+            .getElementById("export-overlay")
+            .classList.remove("is-active");
+        }
+
+        async function processSingleFrameReady(msg) {
+          if (!state.exporting) return;
+          const queue = state.exportQueue;
+          const idx = state.exportIndex;
+          if (msg.id !== queue[idx]) return;
+          try {
+            const { jsPDF } = window.jspdf;
+            const useJpeg = state.compressionMode !== "none";
+            const quality = COMPRESSION_QUALITY[state.compressionMode];
+            const b64 = btoa(msg.imageBinary);
+            const imgUrl = useJpeg
+              ? await pngToJpeg(b64, quality)
+              : "data:image/png;base64," + b64;
+            state.exportTotalBytes += Math.round(imgUrl.length * 0.75);
+
+            const over = state.frameOverrides[msg.id] || {};
+            const sizeMode =
+              over.sizeMode && over.sizeMode !== "inherit"
+                ? over.sizeMode
+                : state.sizeMode;
+            const padding =
+              over.padding != null && over.padding !== "inherit"
+                ? over.padding
+                : state.padding;
+
+            let pdfW, pdfH;
+            if (sizeMode === "a4") {
+              pdfW = PAGE_DIMS.a4.w;
+              pdfH = PAGE_DIMS.a4.h;
+            } else if (sizeMode === "letter") {
+              pdfW = PAGE_DIMS.letter.w;
+              pdfH = PAGE_DIMS.letter.h;
+            } else {
+              pdfW = msg.width * PX_TO_MM;
+              pdfH = msg.height * PX_TO_MM;
+            }
+
+            const orientation = pdfW >= pdfH ? "landscape" : "portrait";
+            const fmt = sizeMode === "original" ? [pdfW, pdfH] : sizeMode;
+
+            if (!_pdf) {
+              const coverEnabled =
+                document.getElementById("toggle-cover").checked;
+              _pdf = new jsPDF({ orientation, unit: "mm", format: fmt });
+              if (coverEnabled) {
+                addCoverPage(_pdf, pdfW, pdfH);
+                _pdf.addPage(fmt, orientation);
+              }
+            } else {
+              _pdf.addPage(fmt, orientation);
+            }
+
+            if (sizeMode === "original") {
+              _pdf.addImage(imgUrl, useJpeg ? "JPEG" : "PNG", 0, 0, pdfW, pdfH);
+            } else {
+              const maxW = pdfW - padding * 2;
+              const maxH = pdfH - padding * 2;
+              const asp = msg.width / msg.height;
+              const bAsp = maxW / maxH;
+              const dW = asp > bAsp ? maxW : maxH * asp;
+              const dH = asp > bAsp ? maxW / asp : maxH;
+              const rx = padding + (maxW - dW) / 2;
+              const ry = padding + (maxH - dH) / 2;
+              _pdf.addImage(imgUrl, useJpeg ? "JPEG" : "PNG", rx, ry, dW, dH);
+            }
+
+            const nextIdx = idx + 1;
+            const total = queue.length;
+            const pct = Math.round((nextIdx / total) * 100);
+            state.exportIndex = nextIdx;
+            setOverlayProgress(
+              pct,
+              nextIdx < total
+                ? `Staging page ${nextIdx + 1} of ${total}…`
+                : "Finalising…",
+            );
+            if (nextIdx < total) {
+              postToPlugin({ type: "EXPORT_SINGLE_FRAME", id: queue[nextIdx] });
+            } else {
+              finalisePdf(total);
+            }
+          } catch (err) {
+            showToast(`Export error: ${err.message}`, "error");
+            cancelExport();
+          }
+        }
+
+        function addCoverPage(pdf, w, h) {
+          const title =
+            document.getElementById("cover-title").value ||
+            "FrameStack Export Delivery";
+          const subtitle =
+            document.getElementById("cover-subtitle").value ||
+            "Design layout specifications";
+          const themeBtn = document.querySelector(
+            ".cover-theme-btn[aria-pressed='true']",
+          );
+          const theme = themeBtn ? themeBtn.dataset.theme : "minimal";
+          const date = new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          });
+          if (theme === "bold") {
+            pdf.setFillColor(15, 23, 42);
+            pdf.rect(0, 0, w, h, "F");
+            pdf.setFillColor(0, 20, 209);
+            pdf.rect(20, h / 2 - 28, 28, 2.5, "F");
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(20);
+            pdf.text(title, 20, h / 2 - 12);
+            pdf.setTextColor(148, 163, 184);
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(10.5);
+            pdf.text(subtitle, 20, h / 2);
+            pdf.setTextColor(71, 85, 105);
+            pdf.setFontSize(8);
+            pdf.text("Salkom Design Studio · " + date, 20, h - 18);
+          } else if (theme === "stripe") {
+            pdf.setFillColor(255, 255, 255);
+            pdf.rect(0, 0, w, h, "F");
+            pdf.setFillColor(0, 20, 209);
+            pdf.rect(0, 0, 10, h, "F");
+            pdf.setTextColor(15, 23, 42);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(18);
+            pdf.text(title, 26, h / 2 - 10);
+            pdf.setTextColor(100, 116, 139);
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(10);
+            pdf.text(subtitle, 26, h / 2);
+            pdf.setTextColor(148, 163, 184);
+            pdf.setFontSize(8.5);
+            pdf.text(date, 26, h / 2 + 10);
+          } else {
+            pdf.setFillColor(248, 250, 252);
+            pdf.rect(0, 0, w, h, "F");
+            pdf.setTextColor(11, 15, 26);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(18);
+            pdf.text(title, 20, 48);
+            pdf.setTextColor(100, 116, 139);
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(10);
+            pdf.text(subtitle, 20, 58);
+            pdf.setTextColor(148, 163, 184);
+            pdf.setFontSize(8);
+            pdf.text(
+              "Salkom Design Studio © " + new Date().getFullYear(),
+              20,
+              h - 20,
+            );
+          }
+        }
+
+        function finalisePdf(totalPages) {
+          try {
+            const docTitle =
+              document.getElementById("meta-title").value ||
+              "FrameStack PDF Export";
+            const docAuthor =
+              document.getElementById("meta-author").value ||
+              "Salkom Design Studio";
+            const docSubject =
+              document.getElementById("meta-subject").value ||
+              "Design Delivery";
+            const docKeywords =
+              document.getElementById("meta-keywords").value ||
+              "figma, pdf, framestack";
+            _pdf.setProperties({
+              title: docTitle,
+              author: docAuthor,
+              subject: docSubject,
+              keywords: docKeywords,
+              creator: "FrameStack PDF · Salkom Design Studio",
+            });
+            const saveName = slugify(docTitle) + ".pdf";
+            const pdfDataUri = _pdf.output("datauristring");
+            const base64Pdf = pdfDataUri.split(",")[1];
+            _pdf.save(saveName);
+            showToast(
+              `PDF exported — ${formatBytes(state.exportTotalBytes)}`,
+              "success",
+            );
+            logExportEntry(
+              saveName,
+              state.exportTotalBytes,
+              totalPages,
+              base64Pdf,
+            );
+          } catch (err) {
+            showToast(`Save failed: ${err.message}`, "error");
+          }
+          cancelExport();
+        }
+
+        /* ── HISTORY LOGIC ── */
+        function logExportEntry(fileName, totalSize, pages, base64Pdf) {
+          const presetName =
+            PRESETS.find((p) => p.id === state.activePresetId)?.name ||
+            "Custom";
+          const entry = {
+            id: Date.now(),
+            fileName,
+            timestamp: new Date().toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            size: formatBytes(totalSize),
+            pages,
+            presetName,
+          };
+          state.historyLogs.unshift(entry);
+          if (state.historyLogs.length > MAX_HISTORY)
+            state.historyLogs.length = MAX_HISTORY;
+          postToPlugin({ type: "SAVE_HISTORY_LOGS", logs: state.historyLogs });
+          if (base64Pdf)
+            postToPlugin({
+              type: "SAVE_PDF_BLOB",
+              id: entry.id,
+              base64: base64Pdf,
+            });
+          try {
+            localStorage.setItem(
+              HISTORY_LOG_KEY,
+              JSON.stringify(state.historyLogs),
+            );
+          } catch {}
+        }
+        function triggerRedownload(logId, btn) {
+          btn.disabled = true;
+          btn.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div>`;
+          postToPlugin({ type: "FETCH_PDF_DATA", id: logId });
+        }
+        function completeRedownload(base64, logId) {
+          const log = state.historyLogs.find((l) => l.id === logId);
+          const saveName = log ? log.fileName : "framestack-export.pdf";
+          try {
+            const byteArr = Uint8Array.from(atob(base64), (c) =>
+              c.charCodeAt(0),
+            );
+            const blob = new Blob([byteArr], { type: "application/pdf" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = saveName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            showToast("PDF re-downloaded!", "success");
+          } catch (e) {
+            showToast(`Re-download failed: ${e.message}`, "error");
+          }
+          resetRedownloadButtons();
+        }
+        function resetRedownloadButtons() {
+          document.querySelectorAll(".btn-redownload").forEach((btn) => {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ri-download-cloud-2-line"></i>`;
+          });
+        }
+
+        /* ── PLUGIN MESSAGE HANDLER ── */
+        function handlePluginMessage(msg) {
+          switch (msg.type) {
+            case "LOADING":
+              document.getElementById("frame-list").innerHTML =
+                `<div class="state-center"><div class="spinner"></div><div class="state-desc">Analysing canvas layers…</div></div>`;
+              break;
+            case "NO_FRAMES":
+              state.frames = [];
+              state.orderedIds = [];
+              state.selectedIds.clear();
+              clearThumbCache(Array.from(thumbCache.keys()));
+              renderFrameList();
+              syncUI();
+              break;
+            case "FRAMES_LOADED": {
+              const { frames, isRefresh } = msg;
+              const prevSelected = new Set(state.selectedIds);
+              const removedIds = state.orderedIds.filter(
+                (id) => !frames.some((f) => f.id === id),
+              );
+              clearThumbCache(removedIds);
+              state.frames = frames;
+              const newIds = frames.map((f) => f.id);
+              const preserved = state.orderedIds.filter((id) =>
+                newIds.includes(id),
+              );
+              const added = newIds.filter((id) => !preserved.includes(id));
+              state.orderedIds = [...preserved, ...added];
+              state.selectedIds.clear();
+              if (isRefresh) {
+                state.orderedIds.forEach((id) => {
+                  if (prevSelected.has(id)) state.selectedIds.add(id);
+                });
+              } else {
+                state.orderedIds.forEach((id) => state.selectedIds.add(id));
+              }
+              renderFrameList();
+              syncUI();
+              break;
+            }
+            case "SINGLE_FRAME_READY":
+              processSingleFrameReady(msg);
+              break;
+            case "SINGLE_FRAME_FAILED":
+              showToast(
+                `Export failed: ${msg.reason || "Unknown error"}`,
+                "error",
+              );
+              cancelExport();
+              break;
+            case "HISTORY_LOGS_READY":
+              state.historyLogs = Array.isArray(msg.logs) ? msg.logs : [];
+              renderHistory();
+              break;
+            case "PDF_DATA_READY":
+              completeRedownload(msg.base64, msg.id);
+              break;
+            case "PDF_DATA_FAILED":
+              showToast(`Download failed: ${msg.reason}`, "error");
+              resetRedownloadButtons();
+              break;
+          }
+        }
+        window.addEventListener("message", (e) => {
+          const msg = e.data?.pluginMessage;
+          if (msg) handlePluginMessage(msg);
         });
 
-        const saveName   = slugify(docTitle) + ".pdf";
-        const pdfDataUri = _pdf.output("datauristring");
-        const base64Pdf  = pdfDataUri.split(",")[1];
+        /* ── EVENT BINDINGS ── */
 
-        _pdf.save(saveName);
-        showToast(`PDF exported — ${formatBytes(state.exportTotalBytes)}`, "success");
-
-        logExportEntry(saveName, state.exportTotalBytes, totalPages, base64Pdf);
-      } catch (err) {
-        showToast(`Save failed: ${err.message}`, "error");
-      }
-      cancelExport();
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // EXPORT HISTORY
-    // ──────────────────────────────────────────────────────────
-    function logExportEntry(fileName, totalSize, pages, base64Pdf) {
-      const presetName = PRESETS.find(p => p.id === state.activePresetId)?.name || "Custom";
-      const entry = {
-        id:         Date.now(),
-        fileName,
-        timestamp:  new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
-        size:       formatBytes(totalSize),
-        pages,
-        presetName
-      };
-
-      state.historyLogs.unshift(entry);
-      if (state.historyLogs.length > MAX_HISTORY) state.historyLogs.length = MAX_HISTORY;
-
-      postToPlugin({ type: "SAVE_HISTORY_LOGS", logs: state.historyLogs });
-      if (base64Pdf) postToPlugin({ type: "SAVE_PDF_BLOB", id: entry.id, base64: base64Pdf });
-
-      // Local storage fallback (fails silently inside Figma sandbox)
-      try { localStorage.setItem(HISTORY_LOG_KEY, JSON.stringify(state.historyLogs)); } catch {}
-    }
-
-    function triggerRedownload(logId, btn) {
-      btn.disabled = true;
-      btn.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:2px;" aria-hidden="true"></div>`;
-      postToPlugin({ type: "FETCH_PDF_DATA", id: logId });
-    }
-
-    function completeRedownload(base64, logId) {
-      const log      = state.historyLogs.find(l => l.id === logId);
-      const saveName = log ? log.fileName : "framestack-export.pdf";
-
-      try {
-        const byteArr  = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-        const blob     = new Blob([byteArr], { type: "application/pdf" });
-        const url      = URL.createObjectURL(blob);
-        const link     = document.createElement("a");
-        link.href      = url;
-        link.download  = saveName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        // Revoke object URL after a short delay to ensure download starts
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        showToast("PDF re-downloaded!", "success");
-      } catch (e) {
-        showToast(`Re-download failed: ${e.message}`, "error");
-      }
-
-      resetRedownloadButtons();
-    }
-
-    function resetRedownloadButtons() {
-      document.querySelectorAll(".btn-redownload").forEach(btn => {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="ri-download-cloud-2-line" aria-hidden="true"></i>`;
-      });
-    }
-
-    // ──────────────────────────────────────────────────────────
-    // MESSAGE HANDLER
-    // ──────────────────────────────────────────────────────────
-    function handlePluginMessage(msg) {
-      switch (msg.type) {
-        case "LOADING":
-          document.getElementById("frame-list").innerHTML = `
-            <div class="state-center">
-              <div class="spinner" aria-label="Loading frames"></div>
-              <div class="state-desc">Analysing canvas layers…</div>
-            </div>`;
-          break;
-
-        case "NO_FRAMES":
-          state.frames = [];
-          state.orderedIds = [];
-          state.selectedIds.clear();
-          clearThumbCache(Array.from(thumbCache.keys()));
+        // Theme toggle
+        document.getElementById("btn-theme").addEventListener("click", () => {
+          const isDark =
+            document.documentElement.getAttribute("data-theme") === "dark";
+          document.documentElement.setAttribute(
+            "data-theme",
+            isDark ? "light" : "dark",
+          );
+          document.querySelector("#btn-theme i").className = isDark
+            ? "ri-moon-clear-line"
+            : "ri-sun-line";
+          showToast(isDark ? "Light mode" : "Dark mode", "info");
           renderFrameList();
+        });
+
+        // Close
+        document
+          .getElementById("btn-close")
+          .addEventListener("click", () => postToPlugin({ type: "CLOSE" }));
+
+        // Nav clicks
+        document.getElementById("app-nav").addEventListener("click", (e) => {
+          const btn = e.target.closest(".nav-step[data-tab]");
+          if (!btn || btn.classList.contains("is-locked")) return;
+          switchTab(btn.dataset.tab);
+        });
+
+        // Advanced settings toggle
+        document
+          .getElementById("btn-adv-toggle")
+          .addEventListener("click", () => {
+            const body = document.getElementById("adv-body");
+            const toggle = document.getElementById("btn-adv-toggle");
+            const isOpen = body.classList.toggle("is-open");
+            toggle.classList.toggle("is-open", isOpen);
+            toggle.setAttribute("aria-expanded", String(isOpen));
+            body.setAttribute("aria-hidden", String(!isOpen));
+          });
+
+        // Select All
+        document
+          .getElementById("btn-select-all")
+          .addEventListener("click", () => {
+            if (
+              state.selectedIds.size === state.frames.length &&
+              state.frames.length > 0
+            ) {
+              state.selectedIds.clear();
+            } else {
+              state.orderedIds.forEach((id) => state.selectedIds.add(id));
+            }
+            renderFrameList();
+            syncUI();
+          });
+
+        // Margin slider
+        let marginTimer = null;
+        document
+          .getElementById("margin-slider")
+          .addEventListener("input", (e) => {
+            state.padding = parseInt(e.target.value, 10);
+            state.activePresetId = "";
+            document.getElementById("margin-value-badge").textContent =
+              `${state.padding} mm`;
+            clearTimeout(marginTimer);
+            marginTimer = setTimeout(() => {
+              renderPresets();
+              syncEstimator();
+            }, 80);
+          });
+
+        // Export
+        document
+          .getElementById("btn-export")
+          .addEventListener("click", startExport);
+        document
+          .getElementById("btn-cancel-export")
+          .addEventListener("click", cancelExport);
+
+        // Cover toggle
+        document
+          .getElementById("toggle-cover")
+          .addEventListener("change", (e) => {
+            document.getElementById("cover-controls").hidden =
+              !e.target.checked;
+            e.target.setAttribute("aria-checked", String(e.target.checked));
+          });
+
+        // Cover themes
+        document
+          .getElementById("cover-themes")
+          .addEventListener("click", (e) => {
+            const btn = e.target.closest(".cover-theme-btn[data-theme]");
+            if (!btn) return;
+            document
+              .querySelectorAll(".cover-theme-btn")
+              .forEach((b) => b.setAttribute("aria-pressed", "false"));
+            btn.setAttribute("aria-pressed", "true");
+          });
+
+        // Presets
+        document
+          .getElementById("presets-row")
+          .addEventListener("click", (e) => {
+            const chip = e.target.closest(".preset-chip[data-preset-id]");
+            if (!chip) return;
+            const preset = PRESETS.find((p) => p.id === chip.dataset.presetId);
+            if (!preset) return;
+            state.sizeMode = preset.sizeMode;
+            state.compressionMode = preset.compressionMode;
+            state.padding = preset.padding;
+            state.activePresetId = preset.id;
+            syncUI();
+            renderSegmented(
+              "seg-sizes",
+              SIZE_OPTIONS,
+              state.sizeMode,
+              "sizeMode",
+            );
+            renderSegmented(
+              "seg-compression",
+              COMPRESSION_OPTIONS,
+              state.compressionMode,
+              "compression",
+            );
+          });
+
+        // Size seg
+        document.getElementById("seg-sizes").addEventListener("click", (e) => {
+          const btn = e.target.closest(".seg-btn[data-size-mode]");
+          if (!btn) return;
+          state.sizeMode = btn.dataset.sizeMode;
+          state.activePresetId = "";
           syncUI();
-          break;
+          renderSegmented(
+            "seg-sizes",
+            SIZE_OPTIONS,
+            state.sizeMode,
+            "sizeMode",
+          );
+        });
 
-        case "FRAMES_LOADED": {
-          const { frames, isRefresh } = msg;
-          const prevSelected = new Set(state.selectedIds);
-          const removedIds   = state.orderedIds.filter(id => !frames.some(f => f.id === id));
-          clearThumbCache(removedIds);
+        // Compression seg
+        document
+          .getElementById("seg-compression")
+          .addEventListener("click", (e) => {
+            const btn = e.target.closest(".seg-btn[data-compression]");
+            if (!btn) return;
+            state.compressionMode = btn.dataset.compression;
+            state.activePresetId = "";
+            syncUI();
+            renderSegmented(
+              "seg-compression",
+              COMPRESSION_OPTIONS,
+              state.compressionMode,
+              "compression",
+            );
+          });
 
-          state.frames    = frames;
-          const newIds    = frames.map(f => f.id);
+        // History list
+        document
+          .getElementById("history-list")
+          .addEventListener("click", (e) => {
+            const btn = e.target.closest(".btn-redownload[data-log-id]");
+            if (!btn) return;
+            triggerRedownload(parseInt(btn.dataset.logId, 10), btn);
+          });
 
-          // Preserve order for existing IDs; append new ones
-          const preserved = state.orderedIds.filter(id => newIds.includes(id));
-          const added     = newIds.filter(id => !preserved.includes(id));
-          state.orderedIds = [...preserved, ...added];
+        // Clear history
+        document
+          .getElementById("btn-clear-history")
+          .addEventListener("click", () => {
+            state.historyLogs = [];
+            postToPlugin({ type: "SAVE_HISTORY_LOGS", logs: [] });
+            try {
+              localStorage.removeItem(HISTORY_LOG_KEY);
+            } catch {}
+            showToast("Export history cleared.", "info");
+            renderHistory();
+          });
 
-          // Selection logic
-          state.selectedIds.clear();
-          if (isRefresh) {
-            // Keep previously selected IDs that still exist
-            state.orderedIds.forEach(id => {
-              if (prevSelected.has(id)) state.selectedIds.add(id);
-            });
-          } else {
-            // Auto-select all on initial load
-            state.orderedIds.forEach(id => state.selectedIds.add(id));
-          }
-
-          renderFrameList();
-          syncUI();
-          break;
-        }
-
-        case "SINGLE_FRAME_READY":
-          processSingleFrameReady(msg);
-          break;
-
-        case "SINGLE_FRAME_FAILED":
-          showToast(`Export failed: ${msg.reason || "Unknown error"}`, "error");
-          cancelExport();
-          break;
-
-        case "HISTORY_LOGS_READY":
-          state.historyLogs = Array.isArray(msg.logs) ? msg.logs : [];
+        /* ── BOOT ── */
+        (function boot() {
+          renderSegmented(
+            "seg-sizes",
+            SIZE_OPTIONS,
+            state.sizeMode,
+            "sizeMode",
+          );
+          renderSegmented(
+            "seg-compression",
+            COMPRESSION_OPTIONS,
+            state.compressionMode,
+            "compression",
+          );
+          renderPresets();
           renderHistory();
-          break;
-
-        case "PDF_DATA_READY":
-          completeRedownload(msg.base64, msg.id);
-          break;
-
-        case "PDF_DATA_FAILED":
-          showToast(`Download failed: ${msg.reason}`, "error");
-          resetRedownloadButtons();
-          break;
-      }
-    }
-
-    window.addEventListener("message", (event) => {
-      const msg = event.data?.pluginMessage;
-      if (msg) handlePluginMessage(msg);
-    });
-
-    // ──────────────────────────────────────────────────────────
-    // STATIC BUTTON BINDINGS
-    // ──────────────────────────────────────────────────────────
-
-    // Theme toggle
-    document.getElementById("btn-theme").addEventListener("click", () => {
-      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-      document.documentElement.setAttribute("data-theme", isDark ? "light" : "dark");
-      const icon = document.querySelector("#btn-theme i");
-      icon.className = isDark ? "ri-moon-clear-line" : "ri-sun-line";
-      showToast(isDark ? "Light mode on." : "Dark mode on.", "success");
-      // Re-render frame list to refresh any theme-dependent content
-      renderFrameList();
-    });
-
-    // Close plugin
-    document.getElementById("btn-close").addEventListener("click", () => {
-      postToPlugin({ type: "CLOSE" });
-    });
-
-    // Tab navigation
-    document.getElementById("app-tabs").addEventListener("click", (e) => {
-      const btn = e.target.closest(".tab-btn[data-tab]");
-      if (btn) switchTab(btn.dataset.tab);
-    });
-
-    // Select all / deselect all
-    document.getElementById("btn-select-all").addEventListener("click", () => {
-      if (state.selectedIds.size === state.frames.length && state.frames.length > 0) {
-        state.selectedIds.clear();
-      } else {
-        state.orderedIds.forEach(id => state.selectedIds.add(id));
-      }
-      renderFrameList();
-      syncUI();
-    });
-
-    // Margin slider — debounced
-    let marginTimer = null;
-    document.getElementById("margin-slider").addEventListener("input", (e) => {
-      state.padding       = parseInt(e.target.value, 10);
-      state.activePresetId = "";
-      document.getElementById("margin-value-badge").textContent = `${state.padding} mm`;
-      clearTimeout(marginTimer);
-      marginTimer = setTimeout(() => { renderPresets(); syncEstimator(); }, 80);
-    });
-
-    // Export button
-    document.getElementById("btn-export").addEventListener("click", startExport);
-
-    // Cancel export
-    document.getElementById("btn-cancel-export").addEventListener("click", cancelExport);
-
-    // Cover page toggle
-    document.getElementById("toggle-cover").addEventListener("change", (e) => {
-      document.getElementById("cover-controls").hidden = !e.target.checked;
-    });
-
-    // Preset chip clicks (event delegation)
-    document.getElementById("presets-row").addEventListener("click", (e) => {
-      const chip = e.target.closest(".preset-chip[data-preset-id]");
-      if (!chip) return;
-      const preset = PRESETS.find(p => p.id === chip.dataset.presetId);
-      if (!preset) return;
-      state.sizeMode        = preset.sizeMode;
-      state.compressionMode = preset.compressionMode;
-      state.padding         = preset.padding;
-      state.activePresetId  = preset.id;
-      syncUI();
-    });
-
-    // Size segmented control
-    document.getElementById("seg-sizes").addEventListener("click", (e) => {
-      const btn = e.target.closest(".seg-btn[data-size-mode]");
-      if (!btn) return;
-      state.sizeMode       = btn.dataset.sizeMode;
-      state.activePresetId = "";
-      syncUI();
-    });
-
-    // Compression segmented control
-    document.getElementById("seg-compression").addEventListener("click", (e) => {
-      const btn = e.target.closest(".seg-btn[data-compression]");
-      if (!btn) return;
-      state.compressionMode = btn.dataset.compression;
-      state.activePresetId  = "";
-      syncUI();
-    });
-
-    // History list click delegation
-    document.getElementById("history-list").addEventListener("click", (e) => {
-      const btn = e.target.closest(".btn-redownload[data-log-id]");
-      if (!btn) return;
-      triggerRedownload(parseInt(btn.dataset.logId, 10), btn);
-    });
-
-    // Clear history
-    document.getElementById("btn-clear-history").addEventListener("click", () => {
-      state.historyLogs = [];
-      postToPlugin({ type: "SAVE_HISTORY_LOGS", logs: [] });
-      try { localStorage.removeItem(HISTORY_LOG_KEY); } catch {}
-      showToast("Export history cleared.", "success");
-      renderHistory();
-    });
-
-    // ──────────────────────────────────────────────────────────
-    // BOOT
-    // ──────────────────────────────────────────────────────────
-    (function boot() {
-      // Populate static segmented controls
-      renderSegmented("seg-sizes",       SIZE_OPTIONS,        state.sizeMode,        "sizeMode");
-      renderSegmented("seg-compression", COMPRESSION_OPTIONS, state.compressionMode, "compression");
-      renderPresets();
-      renderHistory();
-      syncUI();
-
-      // Load persisted history
-      postToPlugin({ type: "GET_HISTORY_LOGS" });
-    })();
-
-  })();
-  </script>
-</body>
+          syncUI();
+          postToPlugin({ type: "GET_HISTORY_LOGS" });
+        })();
+      })();
+    </script>
+  </body>
 </html>

@@ -12,5 +12,6 @@
       "https://cdn.jsdelivr.net"
     ]
   },
-  "documentAccess": "dynamic-page"
+  "documentAccess": "dynamic-page",
+  "capabilities": []
 }

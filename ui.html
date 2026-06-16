@@ -5,33 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FrameStack PDF</title>
 
-    <link
-      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/400.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/500.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/600.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/700.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/400.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/500.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/600.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/700.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 
     <script>
       (function () {
         const _orig = HTMLCanvasElement.prototype.getContext;
         HTMLCanvasElement.prototype.getContext = function (type, attrs) {
-          if (type === "2d")
-            attrs = Object.assign({ willReadFrequently: true }, attrs || {});
+          if (type === "2d") attrs = Object.assign({ willReadFrequently: true }, attrs || {});
           return _orig.call(this, type, attrs);
         };
       })();
@@ -39,86 +23,76 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-      /* ── TOKENS ── */
+      /* =============================================================
+         DESIGN TOKENS
+         ============================================================= */
       :root {
-        --brand: #0014d1;
-        --brand-h: #000fa8;
+        --brand:        #0014d1;
+        --brand-h:      #000fa8;
         --brand-xlight: rgba(0, 20, 209, 0.06);
-        --brand-light: rgba(0, 20, 209, 0.1);
+        --brand-light:  rgba(0, 20, 209, 0.10);
         --brand-border: rgba(0, 20, 209, 0.18);
 
-        --bg: #f7f8fc;
-        --surface: #ffffff;
+        --bg:       #f7f8fc;
+        --surface:  #ffffff;
         --surface2: #f1f3f9;
-        --border: #e4e7ef;
-        --border-focus: rgba(0, 20, 209, 0.35);
+        --border:   #e4e7ef;
 
-        --ink: #0b0f1a;
-        --body: #4a5568;
-        --muted: #667085;
+        --ink:    #0b0f1a;
+        --body:   #4a5568;
+        --muted:  #667085;
         --subtle: #94a3b8;
-        --faint: #cbd5e1;
+        --faint:  #cbd5e1;
 
-        --green: #0d9488;
-        --green-bg: #f0fdf9;
+        --green:        #0d9488;
+        --green-bg:     #f0fdf9;
         --green-border: #99f6e4;
 
-        --red: #dc2626;
-        --red-bg: #fef2f2;
+        --red:        #dc2626;
+        --red-bg:     #fef2f2;
         --red-border: #fca5a5;
 
         --sans: "Inter", system-ui, sans-serif;
 
         --r-xs: 4px;
         --r-sm: 6px;
-        --r: 10px;
+        --r:    10px;
         --r-lg: 14px;
         --r-xl: 18px;
 
-        --sh-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-        --sh-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
+        --sh-xs: 0 1px 2px  rgba(15, 23, 42, 0.04);
+        --sh-sm: 0 2px 6px  rgba(15, 23, 42, 0.06);
         --sh-md: 0 4px 16px rgba(15, 23, 42, 0.08);
         --sh-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 
         --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
         --h-header: 52px;
-        --h-nav: 48px;
+        --h-nav:    44px;
         --h-footer: 64px;
       }
 
       [data-theme="dark"] {
-        --bg: #090d1a;
-        --surface: #111827;
+        --bg:       #090d1a;
+        --surface:  #111827;
         --surface2: #0c1220;
-        --border: #1e2d45;
-        --border-focus: rgba(0, 20, 209, 0.5);
-
-        --ink: #f0f4ff;
-        --body: #c5d0e8;
-        --muted: #8899bb;
+        --border:   #1e2d45;
+        --ink:    #f0f4ff;
+        --body:   #c5d0e8;
+        --muted:  #8899bb;
         --subtle: #4a6080;
-        --faint: #1e2d45;
-
-        --green-bg: rgba(13, 148, 136, 0.12);
-        --green-border: rgba(153, 246, 228, 0.2);
-
-        --red-bg: rgba(220, 38, 38, 0.12);
-        --red-border: rgba(252, 165, 165, 0.2);
+        --faint:  #1e2d45;
+        --green-bg:     rgba(13, 148, 136, 0.12);
+        --green-border: rgba(153, 246, 228, 0.20);
+        --red-bg:       rgba(220, 38, 38, 0.12);
+        --red-border:   rgba(252, 165, 165, 0.20);
       }
 
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-      html,
-      body {
-        height: 100%;
-        overflow: hidden;
-      }
+      /* =============================================================
+         RESET
+         ============================================================= */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; overflow: hidden; }
       body {
         font-family: var(--sans);
         font-size: 13px;
@@ -129,9 +103,7 @@
         user-select: none;
         display: flex;
         flex-direction: column;
-        transition:
-          background 0.2s var(--ease),
-          color 0.2s var(--ease);
+        transition: background 0.2s var(--ease), color 0.2s var(--ease);
       }
       button {
         font-family: var(--sans);
@@ -146,8 +118,7 @@
         outline-offset: 2px;
         border-radius: var(--r-sm);
       }
-      input,
-      select {
+      input, select {
         font-family: var(--sans);
         font-size: 12px;
         background: var(--surface);
@@ -155,38 +126,24 @@
         border: 1px solid var(--border);
         border-radius: var(--r-sm);
         padding: 7px 10px;
-        transition:
-          border-color 0.15s,
-          box-shadow 0.15s;
+        transition: border-color 0.15s, box-shadow 0.15s;
         width: 100%;
       }
-      input:focus,
-      select:focus {
+      input:focus, select:focus {
         outline: none;
         border-color: var(--brand);
         box-shadow: 0 0 0 3px var(--brand-xlight);
       }
       [data-theme="dark"] input,
-      [data-theme="dark"] select {
-        background: var(--surface2);
-        border-color: var(--border);
-      }
-      ::-webkit-scrollbar {
-        width: 4px;
-        height: 4px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--faint);
-        border-radius: 99px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: var(--subtle);
-      }
+      [data-theme="dark"] select { background: var(--surface2); border-color: var(--border); }
+      ::-webkit-scrollbar        { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track  { background: transparent; }
+      ::-webkit-scrollbar-thumb  { background: var(--faint); border-radius: 99px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
 
-      /* ── HEADER ── */
+      /* =============================================================
+         HEADER
+         ============================================================= */
       #app-header {
         height: var(--h-header);
         background: var(--surface);
@@ -197,1212 +154,555 @@
         padding: 0 14px 0 12px;
         flex-shrink: 0;
         z-index: 40;
-        transition:
-          background 0.2s,
-          border-color 0.2s;
+        transition: background 0.2s, border-color 0.2s;
       }
-      .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-      }
+      .header-brand { display: flex; align-items: center; gap: 9px; }
       .header-logo {
-        width: 28px;
-        height: 28px;
-        border-radius: 7px;
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--brand);
-        overflow: hidden;
+        width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--brand); overflow: hidden;
       }
-      .header-logo svg {
-        width: 18px;
-        height: 18px;
-      }
-      .header-wordmark {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-      }
+      .header-logo svg { width: 18px; height: 18px; }
+      .header-wordmark { display: flex; flex-direction: column; gap: 0; }
       .wordmark-name {
-        font-size: 12.5px;
-        font-weight: 700;
-        letter-spacing: -0.015em;
-        color: var(--ink);
-        line-height: 1.1;
+        font-size: 12.5px; font-weight: 700; letter-spacing: -0.015em;
+        color: var(--ink); line-height: 1.1;
       }
       .wordmark-tag {
-        font-size: 9px;
-        font-weight: 500;
-        color: var(--subtle);
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        line-height: 1;
+        font-size: 9px; font-weight: 500; color: var(--subtle);
+        letter-spacing: 0.04em; text-transform: uppercase; line-height: 1;
       }
-      .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
+      .header-actions { display: flex; align-items: center; gap: 4px; }
       .icon-btn {
-        width: 30px;
-        height: 30px;
-        border-radius: var(--r-sm);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--muted);
-        font-size: 15px;
-        transition:
-          background 0.15s,
-          color 0.15s;
+        width: 30px; height: 30px; border-radius: var(--r-sm);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--muted); font-size: 15px;
+        transition: background 0.15s, color 0.15s;
       }
-      .icon-btn:hover {
-        background: var(--surface2);
-        color: var(--ink);
-      }
+      .icon-btn:hover { background: var(--surface2); color: var(--ink); }
 
-      /* ── PROGRESSIVE NAV ── */
+      /* =============================================================
+         NAV (2 tabs)
+         ============================================================= */
       #app-nav {
         height: var(--h-nav);
         background: var(--surface);
         border-bottom: 1px solid var(--border);
         display: flex;
         align-items: stretch;
-        padding: 0 14px;
-        gap: 0;
+        padding: 0 4px;
         flex-shrink: 0;
         z-index: 35;
-        transition:
-          background 0.2s,
-          border-color 0.2s;
+        transition: background 0.2s, border-color 0.2s;
       }
-      .nav-step {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        padding: 0 14px 0 10px;
+      .nav-tab {
+        display: flex; align-items: center; gap: 5px;
+        padding: 0 16px;
         border-bottom: 2px solid transparent;
-        cursor: pointer;
-        position: relative;
-        transition:
-          border-color 0.18s,
-          color 0.18s,
-          background 0.15s;
-        color: var(--subtle);
-        font-size: 11.5px;
-        font-weight: 500;
-        letter-spacing: 0.01em;
-        border-radius: 0;
-        flex-shrink: 0;
-        user-select: none;
+        cursor: pointer; color: var(--muted);
+        font-size: 12px; font-weight: 500; letter-spacing: 0.01em;
+        white-space: nowrap; flex-shrink: 0;
+        transition: color 0.15s, border-color 0.15s, background 0.12s;
       }
-      .nav-step:not(.is-locked):hover {
-        color: var(--ink);
-        background: var(--brand-xlight);
+      .nav-tab:hover { color: var(--ink); background: var(--brand-xlight); }
+      .nav-tab.is-active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+      .tab-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 16px; height: 16px; padding: 0 4px;
+        border-radius: 99px; background: var(--brand); color: #fff;
+        font-size: 9px; font-weight: 700;
+        opacity: 0; transform: scale(0.7);
+        transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
       }
-      .nav-step.is-active {
-        color: var(--brand);
-        border-bottom-color: var(--brand);
-      }
-      .nav-step.is-done {
-        color: var(--body);
-      }
-      .nav-step.is-locked {
-        cursor: not-allowed;
-        opacity: 0.4;
-      }
-      .nav-step-num {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        font-size: 9.5px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        background: var(--surface2);
-        color: var(--subtle);
-        transition:
-          background 0.2s,
-          color 0.2s;
-      }
-      .nav-step.is-active .nav-step-num {
-        background: var(--brand);
-        color: #fff;
-      }
-      .nav-step.is-done .nav-step-num {
-        background: var(--green);
-        color: #fff;
-      }
-      .nav-step.is-done .nav-step-num::before {
-        content: none;
-      }
-      .nav-unlock-badge {
-        font-size: 8.5px;
-        font-weight: 600;
-        background: var(--brand-xlight);
-        color: var(--brand);
-        border: 1px solid var(--brand-border);
-        border-radius: 99px;
-        padding: 1px 6px;
-        letter-spacing: 0.02em;
-      }
-      .nav-divider {
-        width: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--faint);
-        font-size: 11px;
-        flex-shrink: 0;
-      }
+      .tab-badge.is-visible { opacity: 1; transform: scale(1); }
 
-      /* ── CONTENT AREA ── */
+      /* =============================================================
+         CONTENT AREA
+         ============================================================= */
       #app-body {
-        flex: 1;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        position: relative;
+        flex: 1; overflow: hidden; display: flex;
+        flex-direction: column; position: relative;
       }
       .tab-panel {
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
-        display: none;
-        flex-direction: column;
+        flex: 1; overflow-y: auto; overflow-x: hidden;
+        display: none; flex-direction: column;
       }
-      .tab-panel.is-active {
-        display: flex;
-      }
+      .tab-panel.is-active { display: flex; }
+      #panel-select { overflow: hidden; }
 
-      /* ── PANEL PADDING ── */
-      .panel-inner {
-        padding: 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        flex: 1;
-      }
-
-      /* ── SECTION LABEL ── */
+      /* =============================================================
+         SECTION LABEL
+         ============================================================= */
       .sec-label {
-        font-size: 9.5px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--subtle);
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+        font-size: 10px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; color: var(--subtle); margin-bottom: 8px;
+        display: flex; align-items: center; gap: 6px;
       }
-      .sec-label i {
-        font-size: 11px;
+      .sec-label i { font-size: 11px; }
+
+      /* =============================================================
+         FRAMES TOOLBAR
+         ============================================================= */
+      .frames-toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 14px 6px; flex-shrink: 0;
+      }
+      .frames-toolbar .sec-label { margin-bottom: 0; }
+      .toolbar-actions { display: flex; align-items: center; gap: 6px; }
+      .btn-find-all {
+        font-size: 11px; font-weight: 600; color: var(--muted);
+        padding: 4px 9px; border-radius: var(--r-sm);
+        border: 1px solid var(--border); background: var(--surface2);
+        display: flex; align-items: center; gap: 4px;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      .btn-find-all i { font-size: 11px; }
+      .btn-find-all:hover { color: var(--ink); background: var(--surface); border-color: var(--subtle); }
+      .btn-select-all {
+        font-size: 11px; font-weight: 600; color: var(--brand);
+        padding: 4px 10px; border-radius: var(--r-sm);
+        border: 1px solid var(--brand-border); background: var(--brand-xlight);
+        transition: background 0.15s;
+      }
+      .btn-select-all:hover { background: var(--brand-light); }
+
+      /* =============================================================
+         FRAMES SCROLLABLE AREA
+         ============================================================= */
+      .frames-area {
+        flex: 1; overflow-y: auto; overflow-x: hidden;
+        padding: 0 14px 10px;
+        display: flex; flex-direction: column; gap: 6px; min-height: 0;
       }
 
-      /* ── PRESETS ── */
-      .preset-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-      }
-      .preset-chip {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        padding: 9px 6px;
-        border-radius: var(--r);
-        border: 1.5px solid var(--border);
+      /* =============================================================
+         PRESETS STRIP  (above settings)
+         ============================================================= */
+      .presets-strip {
+        flex-shrink: 0; padding: 10px 14px 12px;
+        border-top: 1px solid var(--border);
         background: var(--surface);
-        font-size: 9.5px;
-        font-weight: 600;
-        color: var(--body);
-        letter-spacing: 0.01em;
-        text-align: center;
-        transition:
-          border-color 0.15s,
-          background 0.15s,
-          color 0.15s,
-          box-shadow 0.15s;
-        cursor: pointer;
-        line-height: 1.2;
+        transition: background 0.2s, border-color 0.2s;
       }
-      .preset-chip i {
-        font-size: 16px;
-        color: var(--muted);
-        transition: color 0.15s;
+      .presets-strip .sec-label { margin-bottom: 7px; }
+      .preset-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+      .preset-chip {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 3px; padding: 9px 6px;
+        border-radius: var(--r); border: 1.5px solid var(--border);
+        background: var(--surface2); text-align: center; cursor: pointer; line-height: 1.2;
+        transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
       }
-      .preset-chip:hover {
-        border-color: var(--brand-border);
-        background: var(--brand-xlight);
-        color: var(--brand);
+      .preset-chip i { font-size: 15px; color: var(--muted); transition: color 0.15s; flex-shrink: 0; }
+      .preset-name {
+        font-size: 10px; font-weight: 600; color: var(--body);
+        letter-spacing: 0.01em; transition: color 0.15s;
       }
-      .preset-chip:hover i {
-        color: var(--brand);
-      }
+      .preset-sub { font-size: 10px; font-weight: 400; color: var(--subtle); line-height: 1; transition: color 0.15s; }
+      .preset-chip:hover { border-color: var(--brand-border); background: var(--brand-xlight); }
+      .preset-chip:hover i, .preset-chip:hover .preset-name { color: var(--brand); }
       .preset-chip[aria-pressed="true"] {
-        border-color: var(--brand);
-        background: var(--brand-xlight);
-        color: var(--brand);
-        box-shadow: 0 0 0 3px var(--brand-xlight);
+        border-color: var(--brand); background: var(--brand-xlight);
+        box-shadow: 0 0 0 2.5px var(--brand-xlight);
       }
-      .preset-chip[aria-pressed="true"] i {
-        color: var(--brand);
-      }
+      .preset-chip[aria-pressed="true"] i,
+      .preset-chip[aria-pressed="true"] .preset-name { color: var(--brand); }
+      .preset-chip[aria-pressed="true"] .preset-sub { color: rgba(0, 20, 209, 0.55); }
 
-      /* ── SEGMENTED ── */
+      /* =============================================================
+         SETTINGS STRIP
+         ============================================================= */
+      .settings-strip {
+        flex-shrink: 0; padding: 10px 14px 8px;
+        display: flex; flex-direction: column; gap: 10px;
+        border-top: 1px solid var(--border); background: var(--surface);
+        transition: background 0.2s, border-color 0.2s;
+      }
+      .settings-row { display: flex; flex-direction: column; }
+      .settings-row .sec-label { margin-bottom: 6px; }
+
+      /* =============================================================
+         SEGMENTED CONTROLS
+         ============================================================= */
       .seg-group {
-        display: flex;
-        gap: 0;
-        background: var(--surface2);
-        border-radius: var(--r-sm);
-        padding: 2px;
+        display: flex; background: var(--surface2);
+        border-radius: var(--r-sm); padding: 2px;
       }
       .seg-btn {
-        flex: 1;
-        padding: 5px 8px;
-        font-size: 11px;
-        font-weight: 500;
-        color: var(--muted);
-        border-radius: calc(var(--r-sm) - 1px);
-        transition:
-          background 0.15s,
-          color 0.15s,
-          box-shadow 0.15s;
-        white-space: nowrap;
+        flex: 1; padding: 5px 6px; font-size: 11px; font-weight: 500;
+        color: var(--muted); border-radius: calc(var(--r-sm) - 1px);
+        transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+        white-space: nowrap; text-align: center;
       }
-      .seg-btn:hover {
-        color: var(--ink);
-      }
+      .seg-btn:hover { color: var(--ink); }
       .seg-btn[aria-pressed="true"] {
-        background: var(--surface);
-        color: var(--ink);
-        font-weight: 600;
-        box-shadow:
-          0 1px 3px rgba(15, 23, 42, 0.08),
-          0 0 0 0.5px rgba(15, 23, 42, 0.06);
+        background: var(--surface); color: var(--ink); font-weight: 600;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 0 0 0.5px rgba(15, 23, 42, 0.06);
       }
 
-      /* ── CONTROL ROW ── */
-      .ctrl-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+      /* =============================================================
+         MORE OPTIONS COLLAPSE
+         ============================================================= */
+      .adv-toggle {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 14px; cursor: pointer;
+        border-top: 1px solid var(--border);
+        font-size: 11px; font-weight: 600; color: var(--muted);
+        transition: color 0.15s, background 0.15s;
+        flex-shrink: 0; background: var(--surface);
+      }
+      .adv-toggle:hover { color: var(--ink); background: var(--surface2); }
+      .adv-toggle i.toggle-chevron { font-size: 14px; transition: transform 0.25s var(--ease); }
+      .adv-toggle.is-open i.toggle-chevron { transform: rotate(180deg); }
+      .adv-body {
+        overflow: hidden; max-height: 0;
+        transition: max-height 0.35s var(--ease);
+        display: flex; flex-direction: column; flex-shrink: 0;
+      }
+      .adv-inner {
+        padding: 12px 14px 14px;
+        display: flex; flex-direction: column; gap: 10px;
+        border-top: 1px solid var(--border); background: var(--surface);
       }
 
-      /* ── SLIDER ── */
-      .slider-wrap {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+      /* SLIDER */
+      .slider-wrap { display: flex; align-items: center; gap: 8px; }
       .margin-badge {
-        font-size: 10px;
-        font-weight: 700;
-        color: var(--brand);
-        background: var(--brand-xlight);
-        border: 1px solid var(--brand-border);
-        border-radius: 99px;
-        padding: 2px 8px;
-        white-space: nowrap;
-        flex-shrink: 0;
+        font-size: 10px; font-weight: 700; color: var(--muted);
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: 99px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0;
       }
       input[type="range"] {
-        -webkit-appearance: none;
-        height: 3px;
-        border-radius: 99px;
-        background: var(--faint);
-        cursor: pointer;
-        border: none;
-        padding: 0;
+        -webkit-appearance: none; appearance: none; height: 3px; border-radius: 99px;
+        background: var(--faint); cursor: pointer; border: none; padding: 0;
         transition: opacity 0.15s;
       }
       input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: var(--brand);
-        cursor: pointer;
-        box-shadow: 0 1px 4px rgba(0, 20, 209, 0.3);
+        -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+        background: var(--brand); cursor: pointer; box-shadow: 0 1px 4px rgba(0, 20, 209, 0.3);
       }
-      input[type="range"]:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-      }
+      input[type="range"]:disabled { opacity: 0.35; cursor: not-allowed; }
+      .adv-note { font-size: 10px; color: var(--subtle); margin-top: 2px; }
 
-      /* ── FRAME LIST ── */
-      #frame-list {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        flex: 1;
+      /* ADV SUB-SECTIONS (cover page, doc info) */
+      .adv-sub-section {
+        border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden;
       }
-
-      .frame-card {
-        border: 1.5px solid var(--border);
-        border-radius: var(--r);
+      .adv-sub-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 10px; min-height: 38px; background: var(--surface2);
+      }
+      button.adv-sub-head {
+        width: 100%; cursor: pointer; text-align: left;
+        transition: background 0.15s;
+      }
+      button.adv-sub-head:hover { background: var(--surface); }
+      .adv-sub-title {
+        font-size: 11px; font-weight: 600; color: var(--ink);
+        display: flex; align-items: center; gap: 6px;
+      }
+      .adv-sub-title i { font-size: 13px; color: var(--muted); }
+      .adv-sub-content {
+        padding: 10px; border-top: 1px solid var(--border);
+        display: flex; flex-direction: column; gap: 8px;
         background: var(--surface);
-        overflow: hidden;
-        transition:
-          border-color 0.15s,
-          box-shadow 0.15s;
-        cursor: pointer;
-      }
-      .frame-card:hover {
-        border-color: var(--brand-border);
-        box-shadow: var(--sh-sm);
-      }
-      .frame-card.is-selected {
-        border-color: var(--brand);
-        box-shadow:
-          0 0 0 2.5px var(--brand-xlight),
-          var(--sh-xs);
-      }
-      .frame-card-main {
-        display: flex;
-        align-items: stretch;
-        gap: 0;
-        min-height: 56px;
-      }
-      .frame-thumb-col {
-        width: 62px;
-        flex-shrink: 0;
-        background: var(--surface2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        border-right: 1px solid var(--border);
-      }
-      .frame-thumb {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        display: block;
-      }
-      .frame-thumb-placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--faint);
-        font-size: 20px;
-        width: 100%;
-        height: 100%;
-      }
-      .frame-info-col {
-        flex: 1;
-        padding: 9px 10px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 2px;
-        min-width: 0;
-      }
-      .frame-name {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--ink);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .frame-dims {
-        font-size: 10px;
-        color: var(--muted);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-      .frame-dims-dot {
-        width: 2px;
-        height: 2px;
-        border-radius: 50%;
-        background: var(--faint);
-        flex-shrink: 0;
-      }
-      .frame-actions-col {
-        display: flex;
-        align-items: center;
-        padding: 0 8px;
-        gap: 4px;
-        flex-shrink: 0;
-      }
-      .frame-check-btn {
-        width: 20px;
-        height: 20px;
-        border-radius: 5px;
-        border: 1.5px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--surface);
-        transition:
-          border-color 0.15s,
-          background 0.15s;
-        font-size: 11px;
-        color: transparent;
-        flex-shrink: 0;
-      }
-      .frame-card.is-selected .frame-check-btn {
-        background: var(--brand);
-        border-color: var(--brand);
-        color: #fff;
-      }
-      .drag-handle {
-        width: 16px;
-        height: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--faint);
-        font-size: 14px;
-        cursor: grab;
-        flex-shrink: 0;
-      }
-      .drag-handle:hover {
-        color: var(--subtle);
-      }
-      .frame-card.is-dragging {
-        opacity: 0.4;
-        box-shadow: none;
-      }
-      .frame-card.drag-over {
-        border-color: var(--brand);
-        background: var(--brand-xlight);
-      }
-      .frame-badge-order {
-        min-width: 17px;
-        height: 17px;
-        padding: 0 4px;
-        border-radius: 99px;
-        background: var(--brand);
-        color: #fff;
-        font-size: 9px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
       }
 
-      /* ── STATE CENTER ── */
-      .state-center {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        text-align: center;
-        padding: 32px 20px;
-        color: var(--subtle);
-      }
-      .state-icon {
-        font-size: 28px;
-        color: var(--faint);
-      }
-      .state-title {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--muted);
-      }
-      .state-desc {
-        font-size: 11.5px;
-        color: var(--subtle);
-        line-height: 1.5;
-        max-width: 220px;
-      }
-
-      /* ── DOCUMENT PANEL ── */
-      .doc-block {
-        border: 1px solid var(--border);
-        border-radius: var(--r);
-        background: var(--surface);
-        overflow: hidden;
-      }
-      .doc-block-head {
-        padding: 10px 14px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: var(--surface2);
-      }
-      .doc-block-title {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--ink);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .doc-block-title i {
-        font-size: 13px;
-        color: var(--brand);
-      }
-      .doc-block-body {
-        padding: 12px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-      .field-row {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .field-label {
-        font-size: 10px;
-        font-weight: 600;
-        color: var(--muted);
-        letter-spacing: 0.02em;
-      }
-      .field-2col {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      /* ── TOGGLE ── */
-      .toggle-wrap {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-      }
-      .toggle {
-        position: relative;
-        width: 30px;
-        height: 17px;
-        flex-shrink: 0;
-      }
-      .toggle input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-        position: absolute;
-      }
-      .toggle-track {
-        position: absolute;
-        inset: 0;
-        border-radius: 99px;
-        background: var(--faint);
-        transition: background 0.2s var(--ease);
-        cursor: pointer;
-      }
-      .toggle-thumb {
-        position: absolute;
-        top: 2.5px;
-        left: 2.5px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-        transition: transform 0.2s var(--ease);
-        pointer-events: none;
-      }
-      .toggle input:checked + .toggle-track {
-        background: var(--brand);
-      }
-      .toggle input:checked ~ .toggle-thumb {
-        transform: translateX(13px);
-      }
-      .toggle-label {
-        font-size: 11.5px;
-        font-weight: 500;
-        color: var(--body);
-      }
-
-      /* ── COVER THEMES ── */
-      .cover-themes {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
-      }
-      .cover-theme-btn {
-        padding: 8px 6px;
-        border-radius: var(--r-sm);
-        border: 1.5px solid var(--border);
-        background: var(--surface);
-        font-size: 10px;
-        font-weight: 600;
-        color: var(--body);
-        text-align: center;
-        transition:
-          border-color 0.15s,
-          background 0.15s,
-          color 0.15s;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        align-items: center;
-      }
-      .cover-theme-btn .theme-preview {
-        width: 28px;
-        height: 20px;
-        border-radius: 3px;
-        overflow: hidden;
-        flex-shrink: 0;
-      }
-      .cover-theme-btn:hover {
-        border-color: var(--brand-border);
-      }
-      .cover-theme-btn[aria-pressed="true"] {
-        border-color: var(--brand);
-        background: var(--brand-xlight);
-        color: var(--brand);
-      }
-
-      /* ── EST SIZE BAR ── */
+      /* EST SIZE BAR */
       .est-bar {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--r-sm);
-        padding: 8px 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: var(--r-sm); padding: 7px 12px;
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
       }
       .est-label {
-        font-size: 10px;
-        color: var(--muted);
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 5px;
+        font-size: 10px; color: var(--muted); font-weight: 500;
+        display: flex; align-items: center; gap: 5px;
       }
-      .est-label i {
-        font-size: 11px;
-      }
-      .est-value {
-        font-size: 10px;
-        font-weight: 700;
-        color: var(--ink);
-      }
+      .est-label i { font-size: 11px; }
+      .est-value { font-size: 10px; font-weight: 700; color: var(--ink); }
       .badge-green {
-        font-size: 9px;
-        font-weight: 700;
-        background: var(--green-bg);
-        color: var(--green);
-        border: 1px solid var(--green-border);
-        border-radius: 99px;
-        padding: 2px 7px;
+        font-size: 10px; font-weight: 700; background: var(--green-bg); color: var(--green);
+        border: 1px solid var(--green-border); border-radius: 99px; padding: 2px 7px;
       }
       .badge-neutral {
-        font-size: 9px;
-        font-weight: 700;
-        background: var(--surface2);
-        color: var(--muted);
-        border: 1px solid var(--border);
-        border-radius: 99px;
-        padding: 2px 7px;
+        font-size: 10px; font-weight: 700; background: var(--surface2); color: var(--muted);
+        border: 1px solid var(--border); border-radius: 99px; padding: 2px 7px;
       }
 
-      /* ── HISTORY ── */
-      .history-entry {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
+      /* COVER THEMES */
+      .cover-themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+      .cover-theme-btn {
+        padding: 7px 4px 6px; border-radius: var(--r-sm);
+        border: 1.5px solid var(--border); background: var(--surface);
+        font-size: 10px; font-weight: 600; color: var(--body); text-align: center;
+        cursor: pointer; display: flex; flex-direction: column; gap: 5px; align-items: center;
+        transition: border-color 0.15s, background 0.15s, color 0.15s;
+      }
+      .cover-theme-btn .theme-preview { width: 100%; height: 20px; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+      .cover-theme-btn:hover { border-color: var(--brand-border); }
+      .cover-theme-btn[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-xlight); color: var(--brand); }
+
+      /* FIELDS */
+      .field-row { display: flex; flex-direction: column; gap: 4px; }
+      .field-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+      .field-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+      /* TOGGLE */
+      .toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+      .toggle { position: relative; width: 30px; height: 17px; flex-shrink: 0; }
+      .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+      .toggle-track {
+        position: absolute; inset: 0; border-radius: 99px;
+        background: var(--faint); transition: background 0.2s var(--ease); cursor: pointer;
+      }
+      .toggle-thumb {
+        position: absolute; top: 2.5px; left: 2.5px;
+        width: 12px; height: 12px; border-radius: 50%;
+        background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        transition: transform 0.2s var(--ease); pointer-events: none;
+      }
+      .toggle input:checked + .toggle-track { background: var(--brand); }
+      .toggle input:checked ~ .toggle-thumb { transform: translateX(13px); }
+
+      /* =============================================================
+         FRAME CARDS
+         ============================================================= */
+      #frame-list { display: flex; flex-direction: column; gap: 6px; }
+      .frame-card {
+        border: 1.5px solid var(--border); border-radius: var(--r);
+        background: var(--surface); overflow: hidden;
+        transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; flex-shrink: 0;
+      }
+      .frame-card:hover { border-color: var(--brand-border); box-shadow: var(--sh-sm); }
+      .frame-card.is-selected {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 2.5px var(--brand-xlight), var(--sh-xs);
+      }
+      .frame-card-main { display: flex; align-items: stretch; min-height: 60px; }
+      .frame-thumb-col {
+        width: 64px; height: 60px; flex-shrink: 0;
+        background: var(--surface2); display: flex;
+        align-items: center; justify-content: center;
+        overflow: hidden; border-right: 1px solid var(--border);
+      }
+      .frame-thumb { width: 100%; height: 100%; object-fit: contain; display: block; }
+      .frame-thumb-placeholder {
+        display: flex; align-items: center; justify-content: center;
+        color: var(--faint); font-size: 20px; width: 100%; height: 100%;
+      }
+      .thumb-loading-inner {
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+        background-size: 200% 100%; animation: shimmer 1.4s ease infinite;
+      }
+      .frame-info-col {
+        flex: 1; padding: 9px 10px;
+        display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0;
+      }
+      .frame-name {
+        font-size: 12px; font-weight: 600; color: var(--ink);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .frame-dims {
+        font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 5px;
+      }
+      .frame-dims-dot { width: 2px; height: 2px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+      .frame-actions-col {
+        display: flex; align-items: center; padding: 0 8px; gap: 4px; flex-shrink: 0;
+      }
+      .frame-check-btn {
+        width: 20px; height: 20px; border-radius: 5px;
+        border: 1.5px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
         background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--r);
+        transition: border-color 0.15s, background 0.15s;
+        font-size: 11px; color: transparent; flex-shrink: 0; cursor: pointer;
+      }
+      .frame-card.is-selected .frame-check-btn { background: var(--brand); border-color: var(--brand); color: #fff; }
+      .drag-handle {
+        width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+        color: var(--subtle); font-size: 14px; cursor: grab; flex-shrink: 0;
+      }
+      .drag-handle:hover { color: var(--muted); }
+      .frame-card.is-dragging { opacity: 0.4; box-shadow: none; }
+      .frame-card.drag-over { border-color: var(--brand); background: var(--brand-xlight); }
+      .frame-badge-order {
+        min-width: 17px; height: 17px; padding: 0 4px;
+        border-radius: 99px; background: var(--brand); color: #fff;
+        font-size: 10px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      }
+
+      /* =============================================================
+         EMPTY / STATE VIEWS
+         ============================================================= */
+      .state-center {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 10px; text-align: center;
+        padding: 32px 20px; color: var(--subtle); min-height: 100px;
+      }
+      .state-icon { font-size: 28px; color: var(--faint); }
+      .state-icon.branded { color: var(--brand); opacity: 0.55; }
+      .state-title { font-size: 13px; font-weight: 600; color: var(--muted); }
+      .state-desc { font-size: 11.5px; color: var(--subtle); line-height: 1.55; max-width: 220px; }
+      .frame-skeleton {
+        height: 60px; border-radius: var(--r); flex-shrink: 0;
+        background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+        background-size: 200% 100%; animation: shimmer 1.4s ease infinite;
+      }
+      @keyframes shimmer {
+        0%   { background-position:  200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      /* =============================================================
+         HISTORY PANEL
+         ============================================================= */
+      .panel-inner { padding: 14px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+      .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+      .history-entry {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--r);
       }
       .history-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: var(--r-sm);
-        background: var(--brand-xlight);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--brand);
-        font-size: 15px;
-        flex-shrink: 0;
+        width: 32px; height: 32px; border-radius: var(--r-sm);
+        background: var(--brand-xlight); display: flex; align-items: center;
+        justify-content: center; color: var(--brand); font-size: 15px; flex-shrink: 0;
       }
-      .history-info {
-        flex: 1;
-        min-width: 0;
-      }
-      .history-name {
-        font-size: 11.5px;
-        font-weight: 600;
-        color: var(--ink);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .history-meta {
-        font-size: 10px;
-        color: var(--muted);
-      }
+      .history-info { flex: 1; min-width: 0; }
+      .history-name { font-size: 11.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .history-meta { font-size: 10px; color: var(--muted); }
+      .history-preset { font-size: 10px; color: var(--subtle); }
       .btn-redownload {
-        width: 28px;
-        height: 28px;
-        border-radius: var(--r-sm);
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--muted);
-        font-size: 14px;
-        flex-shrink: 0;
-        transition:
-          background 0.15s,
-          color 0.15s;
+        width: 28px; height: 28px; border-radius: var(--r-sm);
+        background: var(--surface2); border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--muted); font-size: 14px; flex-shrink: 0;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
       }
-      .btn-redownload:hover {
-        background: var(--brand-xlight);
-        color: var(--brand);
-        border-color: var(--brand-border);
-      }
+      .btn-redownload:hover { background: var(--brand-xlight); color: var(--brand); border-color: var(--brand-border); }
 
-      /* ── FOOTER ── */
+      /* =============================================================
+         FOOTER
+         ============================================================= */
       #app-footer {
         height: var(--h-footer);
-        background: var(--surface);
-        border-top: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 14px;
-        flex-shrink: 0;
-        z-index: 30;
-        transition:
-          background 0.2s,
-          border-color 0.2s;
+        background: var(--surface); border-top: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 14px; flex-shrink: 0; z-index: 30;
+        transition: background 0.2s, border-color 0.2s;
       }
-      .footer-left {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-      }
-      .footer-eyebrow {
-        font-size: 9px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: var(--subtle);
-      }
-      .footer-count {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--ink);
-      }
+      .footer-left { display: flex; flex-direction: column; gap: 1px; }
+      .footer-eyebrow { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--subtle); }
+      .footer-count { font-size: 13px; font-weight: 700; color: var(--ink); }
       .btn-export {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        padding: 0 18px;
-        height: 38px;
-        border-radius: var(--r);
-        background: var(--brand);
-        color: #fff;
-        font-size: 12.5px;
-        font-weight: 700;
-        letter-spacing: -0.01em;
-        transition:
-          background 0.15s,
-          box-shadow 0.15s,
-          transform 0.1s;
-        box-shadow:
-          0 1px 3px rgba(0, 20, 209, 0.25),
-          0 4px 12px rgba(0, 20, 209, 0.2);
+        display: flex; align-items: center; gap: 7px;
+        padding: 0 18px; height: 38px; border-radius: var(--r);
+        background: var(--brand); color: #fff;
+        font-size: 12.5px; font-weight: 700; letter-spacing: -0.01em;
+        transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+        box-shadow: 0 1px 3px rgba(0,20,209,0.25), 0 4px 12px rgba(0,20,209,0.20);
         white-space: nowrap;
       }
       .btn-export:hover {
         background: var(--brand-h);
-        box-shadow:
-          0 2px 6px rgba(0, 20, 209, 0.3),
-          0 6px 18px rgba(0, 20, 209, 0.25);
+        box-shadow: 0 2px 6px rgba(0,20,209,0.30), 0 6px 18px rgba(0,20,209,0.25);
         transform: translateY(-1px);
       }
-      .btn-export:active {
-        transform: translateY(0);
-        box-shadow: 0 1px 3px rgba(0, 20, 209, 0.2);
-      }
-      .btn-export:disabled {
-        background: var(--faint);
-        color: var(--subtle);
-        box-shadow: none;
-        transform: none;
-        cursor: not-allowed;
-      }
-      .btn-export i {
-        font-size: 15px;
-      }
+      .btn-export:active { transform: translateY(0); box-shadow: 0 1px 3px rgba(0,20,209,0.2); }
+      .btn-export:disabled { background: var(--faint); color: var(--subtle); box-shadow: none; transform: none; cursor: not-allowed; }
+      .btn-export i { font-size: 15px; }
 
-      /* toolbar row above frames */
-      .frames-toolbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 14px 0;
-      }
-      .btn-select-all {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--brand);
-        padding: 4px 10px;
-        border-radius: var(--r-sm);
-        border: 1px solid var(--brand-border);
-        background: var(--brand-xlight);
-        transition: background 0.15s;
-      }
-      .btn-select-all:hover {
-        background: var(--brand-light);
-      }
-      .frames-info {
-        font-size: 10px;
-        color: var(--muted);
-        font-weight: 500;
-      }
-
-      /* ── EXPORT OVERLAY ── */
+      /* =============================================================
+         EXPORT OVERLAY
+         ============================================================= */
       #export-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(7, 11, 26, 0.7);
-        backdrop-filter: blur(6px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        pointer-events: none;
-        z-index: 100;
+        position: absolute; inset: 0;
+        background: rgba(7,11,26,0.72); backdrop-filter: blur(6px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; z-index: 100;
         transition: opacity 0.25s var(--ease);
       }
-      #export-overlay.is-active {
-        opacity: 1;
-        pointer-events: auto;
-      }
+      #export-overlay.is-active { opacity: 1; pointer-events: auto; }
       .export-card {
-        background: var(--surface);
-        border-radius: var(--r-xl);
-        padding: 28px 24px 22px;
-        width: 260px;
-        box-shadow: var(--sh-lg);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 14px;
+        background: var(--surface); border-radius: var(--r-xl);
+        padding: 28px 24px 22px; width: 268px; box-shadow: var(--sh-lg);
+        display: flex; flex-direction: column; align-items: center; gap: 14px;
       }
-      .export-ring {
-        width: 60px;
-        height: 60px;
-        position: relative;
-      }
-      .export-ring svg {
-        width: 60px;
-        height: 60px;
-        transform: rotate(-90deg);
-      }
-      .export-ring-track {
-        fill: none;
-        stroke: var(--surface2);
-        stroke-width: 5;
-      }
+      .export-ring { width: 60px; height: 60px; position: relative; }
+      .export-ring svg { width: 60px; height: 60px; transform: rotate(-90deg); }
+      .export-ring-track { fill: none; stroke: var(--surface2); stroke-width: 5; }
       .export-ring-fill {
-        fill: none;
-        stroke: var(--brand);
-        stroke-width: 5;
-        stroke-linecap: round;
+        fill: none; stroke: var(--brand); stroke-width: 5; stroke-linecap: round;
         transition: stroke-dashoffset 0.4s var(--ease);
       }
       .export-ring-pct {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        font-weight: 800;
-        color: var(--brand);
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 800; color: var(--brand);
       }
-      .export-title {
-        font-size: 14px;
-        font-weight: 800;
-        color: var(--ink);
-        text-align: center;
-      }
-      .export-status {
-        font-size: 11px;
-        color: var(--muted);
-        text-align: center;
-        line-height: 1.4;
-      }
-      .export-stage {
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
-        color: var(--brand);
-        text-align: center;
-      }
-      .export-progress-bar {
-        width: 100%;
-        height: 4px;
-        background: var(--surface2);
-        border-radius: 99px;
-        overflow: hidden;
-      }
-      .export-progress-fill {
-        height: 100%;
-        background: var(--brand);
-        border-radius: 99px;
-        width: 0%;
-        transition: width 0.4s var(--ease);
-      }
+      .export-title { font-size: 14px; font-weight: 800; color: var(--ink); text-align: center; }
+      .export-status { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.4; }
+      .export-stage { font-size: 10px; font-weight: 600; letter-spacing: 0.03em; color: var(--subtle); text-align: center; min-height: 14px; }
+      .export-progress-bar { width: 100%; height: 4px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+      .export-progress-fill { height: 100%; background: var(--brand); border-radius: 99px; width: 0%; transition: width 0.4s var(--ease); }
       .btn-cancel {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--muted);
-        padding: 6px 14px;
-        border-radius: var(--r-sm);
-        border: 1px solid var(--border);
-        background: var(--surface2);
-        transition:
-          color 0.15s,
-          background 0.15s;
+        font-size: 11px; font-weight: 600; color: var(--muted);
+        padding: 6px 14px; border-radius: var(--r-sm);
+        border: 1px solid var(--border); background: var(--surface2);
+        transition: color 0.15s, background 0.15s, border-color 0.15s;
       }
-      .btn-cancel:hover {
-        color: var(--red);
-        border-color: var(--red-border);
-        background: var(--red-bg);
-      }
+      .btn-cancel:hover { color: var(--red); border-color: var(--red-border); background: var(--red-bg); }
 
-      /* ── SPINNER ── */
+      /* =============================================================
+         SPINNER / TOAST / MISC
+         ============================================================= */
       .spinner {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        border: 2px solid var(--brand-xlight);
-        border-top-color: var(--brand);
+        width: 18px; height: 18px; border-radius: 50%;
+        border: 2px solid var(--brand-xlight); border-top-color: var(--brand);
         animation: spin 0.7s linear infinite;
       }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
+      @keyframes spin { to { transform: rotate(360deg); } }
 
-      /* ── TOASTS ── */
       #toast-root {
-        position: absolute;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 200;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        pointer-events: none;
-        width: 90%;
+        position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+        z-index: 200; display: flex; flex-direction: column;
+        align-items: center; gap: 6px; pointer-events: none; width: 90%;
       }
       .toast {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 9px 12px;
-        border-radius: var(--r);
-        background: var(--ink);
-        color: #fff;
-        font-size: 11.5px;
-        font-weight: 500;
-        box-shadow: var(--sh-lg);
-        max-width: 300px;
-        width: 100%;
-        animation: toastIn 0.25s var(--ease) forwards;
-        pointer-events: auto;
+        display: flex; align-items: center; gap: 8px;
+        padding: 9px 12px; border-radius: var(--r);
+        background: var(--ink); color: #fff;
+        font-size: 11.5px; font-weight: 500; box-shadow: var(--sh-lg);
+        max-width: 310px; width: 100%;
+        animation: toastIn 0.25s var(--ease) forwards; pointer-events: auto;
       }
-      .toast.is-leaving {
-        animation: toastOut 0.2s ease forwards;
-      }
-      .toast-success {
-        background: #0b3d2e;
-        color: #6ee7b7;
-      }
-      .toast-error {
-        background: #3d0b0b;
-        color: #fca5a5;
-      }
-      .toast i {
-        font-size: 14px;
-        flex-shrink: 0;
-      }
-      .toast-close {
-        margin-left: auto;
-        padding: 2px;
-        color: inherit;
-        opacity: 0.6;
-        transition: opacity 0.15s;
-        flex-shrink: 0;
-        font-size: 14px;
-      }
-      .toast-close:hover {
-        opacity: 1;
-      }
-      @keyframes toastIn {
-        from {
-          transform: translateY(-10px);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-      @keyframes toastOut {
-        from {
-          transform: translateY(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateY(-8px);
-          opacity: 0;
-        }
-      }
+      .toast.is-leaving { animation: toastOut 0.2s ease forwards; }
+      .toast-success { background: #0b3d2e; color: #6ee7b7; }
+      .toast-error   { background: #3d0b0b; color: #fca5a5; }
+      .toast i       { font-size: 14px; flex-shrink: 0; }
+      .toast-close { margin-left: auto; padding: 2px; color: inherit; opacity: 0.6; transition: opacity 0.15s; flex-shrink: 0; font-size: 14px; }
+      .toast-close:hover { opacity: 1; }
+      @keyframes toastIn  { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0);    opacity: 1; } }
+      @keyframes toastOut { from { transform: translateY(0);    opacity: 1; } to { transform: translateY(-8px); opacity: 0; } }
 
-      /* ── MISC ── */
-      .divider {
-        height: 1px;
-        background: var(--border);
-        margin: 2px 0;
-      }
-      .label {
-        font-size: 10px;
-        color: var(--muted);
-        font-weight: 500;
-      }
-      .btn-text {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--muted);
-        padding: 3px 8px;
-        border-radius: var(--r-xs);
-        transition:
-          color 0.15s,
-          background 0.15s;
-      }
-      .btn-text:hover {
-        color: var(--ink);
-        background: var(--surface2);
-      }
-      .btn-text.danger:hover {
-        color: var(--red);
-        background: var(--red-bg);
-      }
-
-      /* ── UNLOCK HINT (doc tab) ── */
-      .unlock-hint {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 28px 20px;
-        text-align: center;
-      }
-      .unlock-hint-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: var(--r-lg);
-        background: var(--brand-xlight);
-        border: 1.5px solid var(--brand-border);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--brand);
-        font-size: 20px;
-      }
-      .unlock-hint-title {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--muted);
-      }
-      .unlock-hint-desc {
-        font-size: 11px;
-        color: var(--subtle);
-        line-height: 1.5;
-        max-width: 200px;
-      }
-
-      /* ── SETTINGS COLLAPSED ── */
-      .adv-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 9px 14px;
-        cursor: pointer;
-        border-top: 1px solid var(--border);
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--muted);
-        transition:
-          color 0.15s,
-          background 0.15s;
-        flex-shrink: 0;
-        background: var(--surface2);
-      }
-      .adv-toggle:hover {
-        color: var(--ink);
-        background: var(--surface);
-      }
-      .adv-toggle i.toggle-chevron {
-        font-size: 14px;
-        transition: transform 0.2s var(--ease);
-      }
-      .adv-toggle.is-open i.toggle-chevron {
-        transform: rotate(180deg);
-      }
-      .adv-body {
-        overflow: hidden;
-        max-height: 0;
-        transition: max-height 0.3s var(--ease);
-        display: flex;
-        flex-direction: column;
-      }
-      .adv-body.is-open {
-        max-height: 400px;
-      }
-      .adv-inner {
-        padding: 12px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        border-top: 1px solid var(--border);
-      }
+      .btn-text { font-size: 11px; font-weight: 600; color: var(--muted); padding: 3px 8px; border-radius: var(--r-xs); transition: color 0.15s, background 0.15s; }
+      .btn-text:hover { color: var(--ink); background: var(--surface2); }
+      .btn-text.danger:hover { color: var(--red); background: var(--red-bg); }
     </style>
   </head>
+
   <body>
-    <!-- ── HEADER ── -->
+    <!-- ===============================================================
+         HEADER
+         =============================================================== -->
     <header id="app-header">
       <div class="header-brand">
         <div class="header-logo">
-          <!-- Original FrameStack Logo Path, scaled into 18x18 viewBox -->
-          <svg
-            viewBox="0 0 510 510"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg viewBox="0 0 510 510" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="510" height="510" rx="80" fill="#0014D1" />
-            <path
-              d="M121.642 88.334C112.458 88.334 105 95.7348 105 104.864V405.138C105 414.079 112.413 421.668 121.557 421.668H388.443C397.585 421.668 405 414.149 405 404.876L404.995 171.667L321.667 88.334H121.642ZM230 180.001H263.333C263.333 221.5 299.06 266.007 343.603 280.856L335.977 313.168C283.723 305.703 229.702 328.008 180.912 360.536L161.255 333.653C179.358 319.171 196.715 294.596 209.583 265.891C222.405 237.289 230 206.292 230 180.001ZM240 279.527C244.455 269.587 248.405 259.272 251.728 248.809C259.59 260.886 269.255 271.971 280.17 281.589C263.807 284.519 247.777 289.328 232.255 295.461C235 290.239 237.585 284.914 240 279.527Z"
-              fill="white"
-            />
+            <path d="M121.642 88.334C112.458 88.334 105 95.7348 105 104.864V405.138C105 414.079 112.413 421.668 121.557 421.668H388.443C397.585 421.668 405 414.149 405 404.876L404.995 171.667L321.667 88.334H121.642ZM230 180.001H263.333C263.333 221.5 299.06 266.007 343.603 280.856L335.977 313.168C283.723 305.703 229.702 328.008 180.912 360.536L161.255 333.653C179.358 319.171 196.715 294.596 209.583 265.891C222.405 237.289 230 206.292 230 180.001ZM240 279.527C244.455 269.587 248.405 259.272 251.728 248.809C259.59 260.886 269.255 271.971 280.17 281.589C263.807 284.519 247.777 289.328 232.255 295.461C235 290.239 237.585 284.914 240 279.527Z" fill="white" />
           </svg>
         </div>
         <div class="header-wordmark">
@@ -1411,524 +711,381 @@
         </div>
       </div>
       <div class="header-actions">
-        <button
-          id="btn-theme"
-          class="icon-btn"
-          title="Toggle theme"
-          aria-label="Toggle dark mode"
-        >
+        <button id="btn-theme" class="icon-btn" title="Toggle theme" aria-label="Toggle dark mode">
           <i class="ri-moon-clear-line"></i>
         </button>
-        <button
-          id="btn-close"
-          class="icon-btn"
-          title="Close plugin"
-          aria-label="Close plugin"
-        >
+        <button id="btn-close" class="icon-btn" title="Close plugin" aria-label="Close plugin">
           <i class="ri-close-line"></i>
         </button>
       </div>
     </header>
 
-    <!-- ── PROGRESSIVE NAV ── -->
-    <nav id="app-nav" role="tablist" aria-label="Plugin steps">
-      <button
-        class="nav-step is-active"
-        role="tab"
-        data-tab="select"
-        aria-selected="true"
-        id="tab-select"
-      >
-        <span class="nav-step-num" id="num-select">1</span>
-        Select
-      </button>
-      <span class="nav-divider"><i class="ri-arrow-right-s-line"></i></span>
-      <button
-        class="nav-step is-locked"
-        role="tab"
-        data-tab="document"
-        aria-selected="false"
-        id="tab-document"
-        aria-disabled="true"
-      >
-        <span class="nav-step-num" id="num-document">2</span>
-        Document
-        <span class="nav-unlock-badge" id="doc-unlock-badge">Select first</span>
-      </button>
-      <span class="nav-divider"><i class="ri-arrow-right-s-line"></i></span>
-      <button
-        class="nav-step is-locked"
-        role="tab"
-        data-tab="history"
-        aria-selected="false"
-        id="tab-history"
-        aria-disabled="true"
-      >
-        <span class="nav-step-num" id="num-history">3</span>
+    <!-- ===============================================================
+         NAV — 2 tabs only
+         =============================================================== -->
+    <nav id="app-nav" role="tablist" aria-label="Plugin sections">
+      <button class="nav-tab is-active" role="tab" data-tab="select"
+        aria-selected="true" id="tab-select">Export</button>
+      <button class="nav-tab" role="tab" data-tab="history"
+        aria-selected="false" id="tab-history">
         History
+        <span id="history-badge" class="tab-badge" aria-label="exports in history"></span>
       </button>
     </nav>
 
-    <!-- ── BODY ── -->
+    <!-- ===============================================================
+         BODY
+         =============================================================== -->
     <main id="app-body">
-      <!-- ── STEP 1: SELECT ── -->
-      <section
-        id="panel-select"
-        class="tab-panel is-active"
-        role="tabpanel"
-        aria-labelledby="tab-select"
-      >
-        <!-- Presets + Settings -->
-        <div class="panel-inner" style="flex: 0; padding-bottom: 0; gap: 12px">
-          <div>
-            <div class="sec-label">
-              <i class="ri-magic-line"></i> Quick Presets
-            </div>
-            <div class="preset-row" id="presets-row"></div>
+
+      <!-- ── EXPORT PANEL ── -->
+      <section id="panel-select" class="tab-panel is-active"
+        role="tabpanel" aria-labelledby="tab-select">
+
+        <!-- Frames toolbar -->
+        <div class="frames-toolbar">
+          <div class="sec-label" style="margin-bottom:0">
+            <i class="ri-stack-line"></i> Frames
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn-find-all" id="btn-find-all"
+              title="Find all frames on this page"
+              aria-label="Find all frames on this page">
+              <i class="ri-search-line"></i> Find All
+            </button>
+            <button class="btn-select-all" id="btn-select-all">Select All</button>
           </div>
         </div>
 
-        <!-- Advanced toggle -->
-        <button
-          class="adv-toggle"
-          id="btn-adv-toggle"
-          aria-expanded="false"
-          aria-controls="adv-body"
-        >
-          <span style="display: flex; align-items: center; gap: 6px">
-            <i class="ri-settings-3-line" style="font-size: 13px"></i>
-            Advanced Settings
+        <!-- Scrollable frame list -->
+        <div class="frames-area">
+          <div id="frame-list" role="list" aria-label="Frames to export"></div>
+        </div>
+
+        <!-- PRESETS — first, above settings -->
+        <div class="presets-strip">
+          <div class="sec-label"><i class="ri-flashlight-line"></i> Presets</div>
+          <div class="preset-row" id="presets-row"></div>
+        </div>
+
+        <!-- Page Size + Compression — always visible -->
+        <div class="settings-strip">
+          <div class="settings-row">
+            <div class="sec-label"><i class="ri-file-3-line"></i> Page Size</div>
+            <div class="seg-group" id="seg-sizes"></div>
+          </div>
+          <div class="settings-row">
+            <div class="sec-label"><i class="ri-compress-line"></i> Compression</div>
+            <div class="seg-group" id="seg-compression"></div>
+          </div>
+        </div>
+
+        <!-- More Options collapse -->
+        <button class="adv-toggle" id="btn-adv-toggle"
+          aria-expanded="false" aria-controls="adv-body">
+          <span style="display:flex;align-items:center;gap:6px">
+            <i class="ri-equalizer-2-line" style="font-size:13px"></i>
+            More Options
           </span>
           <i class="ri-arrow-down-s-line toggle-chevron"></i>
         </button>
+
         <div class="adv-body" id="adv-body" aria-hidden="true">
           <div class="adv-inner">
-            <div>
-              <div class="sec-label">
-                <i class="ri-file-3-line"></i> Page Size
-              </div>
-              <div class="seg-group" id="seg-sizes"></div>
-            </div>
-            <div>
-              <div class="sec-label">
-                <i class="ri-compress-line"></i> Quality
-              </div>
-              <div class="seg-group" id="seg-compression"></div>
-            </div>
+
+            <!-- Frame Padding -->
             <div id="margin-row">
-              <div class="sec-label" style="justify-content: space-between">
-                <span><i class="ri-layout-grid-line"></i> Margins</span>
-                <span class="margin-badge" id="margin-value-badge">10 mm</span>
+              <div class="sec-label" style="justify-content:space-between;margin-bottom:6px">
+                <span><i class="ri-layout-grid-line"></i> Frame Padding</span>
+                <span class="margin-badge" id="margin-value-badge">12 mm</span>
               </div>
               <div class="slider-wrap">
-                <input
-                  type="range"
-                  id="margin-slider"
-                  min="0"
-                  max="30"
-                  step="1"
-                  value="10"
-                  aria-label="Margin size"
-                  aria-valuemin="0"
-                  aria-valuemax="30"
-                  aria-valuenow="10"
-                />
+                <input type="range" id="margin-slider"
+                  min="0" max="30" step="1" value="12"
+                  aria-label="Frame padding size"
+                  aria-valuemin="0" aria-valuemax="30" aria-valuenow="12" />
+              </div>
+              <div id="margin-note" class="adv-note" hidden>
+                Padding applies to A4 and Letter sizes only
               </div>
             </div>
-            <div class="est-bar">
-              <span class="est-label"
-                ><i class="ri-database-2-line"></i> Estimated size</span
-              >
-              <span class="est-value" id="est-size">— KB</span>
-              <span class="badge-neutral" id="est-reduction">Lossless</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Frame list toolbar -->
-        <div class="frames-toolbar">
-          <div class="sec-label" style="margin-bottom: 0">
-            <i class="ri-stack-line"></i> Frames
-          </div>
-          <button class="btn-select-all" id="btn-select-all">Select All</button>
-        </div>
-
-        <!-- Frames -->
-        <div
-          style="
-            padding: 8px 14px 14px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-          "
-        >
-          <div id="frame-list" role="list" aria-label="Frames to export"></div>
-        </div>
-      </section>
-
-      <!-- ── STEP 2: DOCUMENT ── -->
-      <section
-        id="panel-document"
-        class="tab-panel"
-        role="tabpanel"
-        aria-labelledby="tab-document"
-      >
-        <!-- Locked state -->
-        <div class="unlock-hint" id="doc-locked-view">
-          <div class="unlock-hint-icon"><i class="ri-lock-2-line"></i></div>
-          <div class="unlock-hint-title">Select frames first</div>
-          <div class="unlock-hint-desc">
-            Pick at least one frame in Step 1 to configure document settings.
-          </div>
-        </div>
-
-        <!-- Unlocked content -->
-        <div class="panel-inner" id="doc-unlocked-view" style="display: none">
-          <!-- Cover Page -->
-          <div class="doc-block">
-            <div class="doc-block-head">
-              <div class="doc-block-title">
-                <i class="ri-layout-masonry-line"></i> Cover Page
-              </div>
-              <label class="toggle-wrap">
-                <div class="toggle">
-                  <input
-                    type="checkbox"
-                    id="toggle-cover"
-                    role="switch"
-                    aria-checked="false"
-                  />
-                  <div class="toggle-track"></div>
-                  <div class="toggle-thumb"></div>
+            <!-- Cover Page sub-section -->
+            <div class="adv-sub-section">
+              <div class="adv-sub-head">
+                <div class="adv-sub-title">
+                  <i class="ri-layout-masonry-line"></i>
+                  Cover Page
                 </div>
-              </label>
-            </div>
-            <div class="doc-block-body" id="cover-controls" hidden>
-              <div class="field-row">
-                <div class="field-label">TITLE</div>
-                <input
-                  type="text"
-                  id="cover-title"
-                  placeholder="Project title…"
-                  value="FrameStack Export Delivery"
-                />
+                <label class="toggle-wrap" aria-label="Enable cover page">
+                  <div class="toggle">
+                    <input type="checkbox" id="toggle-cover" role="switch" aria-checked="false" />
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </label>
               </div>
-              <div class="field-row">
-                <div class="field-label">SUBTITLE</div>
-                <input
-                  type="text"
-                  id="cover-subtitle"
-                  placeholder="Subtitle or date…"
-                  value="Design layout specifications"
-                />
-              </div>
-              <div>
-                <div class="field-label" style="margin-bottom: 8px">STYLE</div>
-                <div class="cover-themes" id="cover-themes">
-                  <button
-                    class="cover-theme-btn"
-                    data-theme="minimal"
-                    aria-pressed="true"
-                  >
-                    <div
-                      class="theme-preview"
-                      style="background: #f8fafc; border: 1px solid #e2e8f0"
-                    ></div>
-                    Minimal
-                  </button>
-                  <button
-                    class="cover-theme-btn"
-                    data-theme="bold"
-                    aria-pressed="false"
-                  >
-                    <div
-                      class="theme-preview"
-                      style="background: #0b0f1a"
-                    ></div>
-                    Bold
-                  </button>
-                  <button
-                    class="cover-theme-btn"
-                    data-theme="stripe"
-                    aria-pressed="false"
-                  >
-                    <div
-                      class="theme-preview"
-                      style="
-                        background: #fff;
-                        border-left: 5px solid #0014d1;
-                        border: 1px solid #e2e8f0;
-                      "
-                    ></div>
-                    Stripe
-                  </button>
+              <div class="adv-sub-content" id="cover-controls" hidden>
+                <div class="field-row">
+                  <div class="field-label">TITLE</div>
+                  <input type="text" id="cover-title" placeholder="Project title…" value="FrameStack Export Delivery" />
+                </div>
+                <div class="field-row">
+                  <div class="field-label">SUBTITLE</div>
+                  <input type="text" id="cover-subtitle" placeholder="Subtitle or date…" value="Design layout specifications" />
+                </div>
+                <div>
+                  <div class="field-label" style="margin-bottom:7px">STYLE</div>
+                  <div class="cover-themes" id="cover-themes">
+                    <button class="cover-theme-btn" data-theme="minimal" aria-pressed="true">
+                      <div class="theme-preview" style="background:#f8fafc;border:1px solid #e2e8f0"></div>
+                      Minimal
+                    </button>
+                    <button class="cover-theme-btn" data-theme="bold" aria-pressed="false">
+                      <div class="theme-preview" style="background:#0b0f1a"></div>
+                      Bold
+                    </button>
+                    <button class="cover-theme-btn" data-theme="accent" aria-pressed="false">
+                      <div class="theme-preview" style="background:#fff;border-left:5px solid #0014d1;border:1px solid #e2e8f0"></div>
+                      Accent
+                    </button>
+                    <button class="cover-theme-btn" data-theme="grid" aria-pressed="false">
+                      <div class="theme-preview" style="background:#fafafa;background-image:radial-gradient(circle,#cbd5e1 1px,transparent 1px);background-size:6px 6px;border:1px solid #e2e8f0"></div>
+                      Grid
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Metadata -->
-          <div class="doc-block">
-            <div class="doc-block-head">
-              <div class="doc-block-title">
-                <i class="ri-information-line"></i> PDF Metadata
-              </div>
-            </div>
-            <div class="doc-block-body">
-              <div class="field-2col">
+            <!-- Document Info sub-section -->
+            <div class="adv-sub-section">
+              <button class="adv-sub-head" id="btn-docinfo-toggle"
+                aria-expanded="false" aria-controls="docinfo-body">
+                <div class="adv-sub-title">
+                  <i class="ri-information-line"></i>
+                  Document Info
+                </div>
+                <i class="ri-arrow-down-s-line toggle-chevron" style="font-size:14px;color:var(--subtle)"></i>
+              </button>
+              <div class="adv-sub-content" id="docinfo-body" hidden>
+                <div class="field-row">
+                  <div class="field-label">FILE NAME</div>
+                  <input type="text" id="meta-filename" placeholder="my-designs (auto from title)" />
+                </div>
                 <div class="field-row">
                   <div class="field-label">DOCUMENT TITLE</div>
-                  <input
-                    type="text"
-                    id="meta-title"
-                    value="FrameStack PDF Export"
-                  />
+                  <input type="text" id="meta-title" value="FrameStack PDF Export" />
                 </div>
                 <div class="field-row">
                   <div class="field-label">AUTHOR</div>
-                  <input
-                    type="text"
-                    id="meta-author"
-                    value="Salkom Design Studio"
-                  />
+                  <input type="text" id="meta-author" value="" placeholder="Your name…" />
+                </div>
+                <div class="field-2col">
+                  <div class="field-row">
+                    <div class="field-label">SUBJECT</div>
+                    <input type="text" id="meta-subject" value="Design Delivery" />
+                  </div>
+                  <div class="field-row">
+                    <div class="field-label">KEYWORDS</div>
+                    <input type="text" id="meta-keywords" value="figma, pdf, framestack" />
+                  </div>
                 </div>
               </div>
-              <div class="field-row">
-                <div class="field-label">SUBJECT</div>
-                <input type="text" id="meta-subject" value="Design Delivery" />
-              </div>
-              <div class="field-row">
-                <div class="field-label">KEYWORDS</div>
-                <input
-                  type="text"
-                  id="meta-keywords"
-                  value="figma, pdf, framestack, salkom"
-                />
-              </div>
             </div>
+
+            <!-- Estimated size -->
+            <div class="est-bar">
+              <span class="est-label"><i class="ri-database-2-line"></i> Estimated size</span>
+              <span class="est-value" id="est-size">—</span>
+              <span class="badge-neutral" id="est-reduction">Select frames</span>
+            </div>
+
           </div>
         </div>
+
       </section>
 
-      <!-- ── STEP 3: HISTORY ── -->
-      <section
-        id="panel-history"
-        class="tab-panel"
-        role="tabpanel"
-        aria-labelledby="tab-history"
-      >
+      <!-- ── HISTORY PANEL ── -->
+      <section id="panel-history" class="tab-panel"
+        role="tabpanel" aria-labelledby="tab-history">
         <div class="panel-inner">
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-            "
-          >
-            <div class="sec-label" style="margin-bottom: 0">
-              <i class="ri-history-line"></i> Export History
+          <div class="history-header">
+            <div class="sec-label" style="margin-bottom:0">
+              <i class="ri-history-line"></i> Exports
             </div>
-            <button class="btn-text danger" id="btn-clear-history">
-              Clear All
-            </button>
+            <button class="btn-text danger" id="btn-clear-history">Clear All</button>
           </div>
-          <div
-            id="history-list"
-            style="display: flex; flex-direction: column; gap: 6px"
-          ></div>
+          <div id="history-list" style="display:flex;flex-direction:column;gap:6px"></div>
         </div>
       </section>
 
       <!-- ── EXPORT OVERLAY ── -->
-      <div
-        id="export-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Export in progress"
-        aria-live="polite"
-      >
+      <div id="export-overlay"
+        role="dialog" aria-modal="true"
+        aria-label="Export in progress">
         <div class="export-card">
           <div class="export-ring">
             <svg viewBox="0 0 60 60">
               <circle class="export-ring-track" cx="30" cy="30" r="24" />
-              <circle
-                class="export-ring-fill"
-                id="ring-fill"
-                cx="30"
-                cy="30"
-                r="24"
+              <circle class="export-ring-fill" id="ring-fill"
+                cx="30" cy="30" r="24"
                 stroke-dasharray="150.796"
-                stroke-dashoffset="150.796"
-              />
+                stroke-dashoffset="150.796" />
             </svg>
             <div class="export-ring-pct" id="overlay-percent">0%</div>
           </div>
-          <div class="export-title">Compiling PDF</div>
-          <div class="export-status" id="overlay-status">Staging assets…</div>
-          <div
-            class="export-progress-bar"
-            role="progressbar"
-            aria-valuenow="0"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            id="overlay-progress-bar"
-          >
+          <div class="export-title">Building your PDF</div>
+          <div class="export-status" id="overlay-status">Preparing export…</div>
+          <div class="export-progress-bar"
+            role="progressbar" aria-valuenow="0"
+            aria-valuemin="0" aria-valuemax="100"
+            id="overlay-progress-bar">
             <div class="export-progress-fill" id="overlay-progress-fill"></div>
           </div>
-          <div class="export-stage">Enterprise Compression Pipeline</div>
-          <button id="btn-cancel-export" class="btn-cancel">
-            Cancel Export
-          </button>
+          <div class="export-stage" id="overlay-stage" aria-live="polite"></div>
+          <button id="btn-cancel-export" class="btn-cancel">Cancel Export</button>
         </div>
       </div>
+
     </main>
 
     <!-- ── FOOTER ── -->
     <footer id="app-footer" role="contentinfo">
       <div class="footer-left">
-        <div class="footer-eyebrow">Ready to export</div>
-        <div id="footer-count" class="footer-count" aria-live="polite">
-          0 frames selected
-        </div>
+        <div id="footer-eyebrow" class="footer-eyebrow">Select frames to begin</div>
+        <div id="footer-count" class="footer-count" aria-live="polite">0 frames selected</div>
       </div>
-      <button
-        id="btn-export"
-        class="btn-export"
-        disabled
-        aria-describedby="footer-count"
-      >
+      <button id="btn-export" class="btn-export" disabled
+        title="Select frames on the canvas first"
+        aria-describedby="footer-count">
         <i class="ri-file-pdf-2-line"></i>
         Export PDF
       </button>
     </footer>
 
     <!-- ── TOAST MOUNT ── -->
-    <div
-      id="toast-root"
-      aria-live="assertive"
-      aria-atomic="true"
-      role="status"
-    ></div>
+    <div id="toast-root" aria-live="assertive" aria-atomic="true" role="status"></div>
 
-    <!-- ══════════════════════════════════════════════════════════
-       APPLICATION LOGIC
-       ══════════════════════════════════════════════════════════ -->
+    <!-- ===============================================================
+         APPLICATION LOGIC
+         =============================================================== -->
     <script>
       (function () {
         "use strict";
 
-        /* ── CONSTANTS ── */
+        /* ============================================================
+           CONSTANTS
+           ============================================================ */
         const COMPRESSION_QUALITY = {
-          none: null,
-          low: 0.96,
+          none:    null,
+          low:     0.96,
           average: 0.85,
-          high: 0.72,
+          high:    0.72,
         };
         const COMPRESSION_FACTORS = {
-          none: 1.0,
-          low: 0.87,
+          none:    1.0,
+          low:     0.87,
           average: 0.55,
-          high: 0.35,
+          high:    0.35,
         };
         const PAGE_DIMS = {
-          a4: { w: 210, h: 297 },
+          a4:     { w: 210,   h: 297   },
           letter: { w: 215.9, h: 279.4 },
         };
-        const PX_TO_MM = 0.264583;
+        const PX_TO_MM    = 0.264583; // 1px at 96 dpi in millimetres
         const MAX_HISTORY = 15;
-        const HISTORY_LOG_KEY = "framestack_history_logs";
 
         const PRESETS = [
           {
-            id: "ux-case-study",
-            name: "UX Case Study",
-            sizeMode: "original",
+            id:              "client-deck",
+            name:            "Client Deck",
+            sub:             "A4 · Standard",
+            sizeMode:        "a4",
             compressionMode: "average",
-            padding: 0,
-            icon: "ri-file-text-line",
+            padding:         12,
+            icon:            "ri-send-plane-line",
           },
           {
-            id: "client-review",
-            name: "Client Review",
-            sizeMode: "letter",
-            compressionMode: "low",
-            padding: 12,
-            icon: "ri-checkbox-circle-line",
-          },
-          {
-            id: "behance-slides",
-            name: "Portfolio",
-            sizeMode: "a4",
+            id:              "email-ready",
+            name:            "Email Ready",
+            sub:             "Original · Small",
+            sizeMode:        "original",
             compressionMode: "high",
-            padding: 10,
-            icon: "ri-compass-3-line",
+            padding:         0,
+            icon:            "ri-mail-send-line",
           },
           {
-            id: "dev-handoff",
-            name: "Dev Handoff",
-            sizeMode: "original",
+            id:              "presentation",
+            name:            "Presentation",
+            sub:             "Original · Standard",
+            sizeMode:        "original",
+            compressionMode: "average",
+            padding:         0,
+            icon:            "ri-slideshow-line",
+          },
+          {
+            id:              "full-quality",
+            name:            "Full Quality",
+            sub:             "Original · Lossless",
+            sizeMode:        "original",
             compressionMode: "none",
-            padding: 0,
-            icon: "ri-code-line",
+            padding:         0,
+            icon:            "ri-hd-line",
           },
         ];
 
         const SIZE_OPTIONS = [
           { v: "original", l: "Original" },
-          { v: "a4", l: "A4" },
-          { v: "letter", l: "Letter" },
+          { v: "a4",       l: "A4"       },
+          { v: "letter",   l: "Letter"   },
         ];
         const COMPRESSION_OPTIONS = [
-          { v: "none", l: "Lossless" },
-          { v: "low", l: "Low" },
-          { v: "average", l: "Balanced" },
-          { v: "high", l: "Max" },
+          { v: "none",    l: "Original Quality" },
+          { v: "low",     l: "Near-Original"    },
+          { v: "average", l: "Standard"         },
+          { v: "high",    l: "Small File"       },
         ];
 
-        /* ── STATE ── */
+        /* ============================================================
+           STATE  (defaults match "Client Deck" preset)
+           ============================================================ */
         const state = {
-          frames: [],
-          orderedIds: [],
-          selectedIds: new Set(),
-          frameOverrides: {},
-          openOverrideId: null,
-          dragSourceId: null,
-          sizeMode: "original",
-          compressionMode: "average",
-          padding: 10,
-          activePresetId: "",
-          activeTab: "select",
-          exporting: false,
-          exportQueue: [],
-          exportIndex: 0,
+          frames:           [],
+          orderedIds:       [],
+          selectedIds:      new Set(),
+          dragSourceId:     null,
+          sizeMode:         "a4",
+          compressionMode:  "average",
+          padding:          12,
+          activePresetId:   "client-deck",
+          activeTab:        "select",
+          exporting:        false,
+          exportQueue:      [],
+          exportIndex:      0,
           exportTotalBytes: 0,
-          historyLogs: [],
+          historyLogs:      [],
         };
         let _pdf = null;
 
-        /* ── PLUGIN BRIDGE ── */
+        /* ============================================================
+           PLUGIN BRIDGE
+           ============================================================ */
         function postToPlugin(msg) {
-          try {
-            parent.postMessage({ pluginMessage: msg }, "*");
-          } catch (e) {}
+          try { parent.postMessage({ pluginMessage: msg }, "*"); } catch (_) {}
         }
 
-        /* ── TOAST ── */
+        /* ============================================================
+           TOAST
+           ============================================================ */
         const toastTimers = new Map();
         function showToast(message, type = "info") {
-          const root = document.getElementById("toast-root");
-          const el = document.createElement("div");
-          const icon = {
-            success: "ri-checkbox-circle-fill",
-            error: "ri-error-warning-fill",
-            info: "ri-information-line",
-          };
+          const root  = document.getElementById("toast-root");
+          const el    = document.createElement("div");
+          const icons = { success: "ri-checkbox-circle-fill", error: "ri-error-warning-fill", info: "ri-information-line" };
           el.className = `toast toast-${type}`;
-          el.innerHTML = `<i class="${icon[type] || icon.info}"></i><span style="flex:1">${message}</span><button class="toast-close" aria-label="Dismiss"><i class="ri-close-line"></i></button>`;
-          el.querySelector(".toast-close").addEventListener("click", () =>
-            dismissToast(el),
-          );
+          el.innerHTML = `<i class="${icons[type] || icons.info}"></i><span style="flex:1">${message}</span><button class="toast-close" aria-label="Dismiss"><i class="ri-close-line"></i></button>`;
+          el.querySelector(".toast-close").addEventListener("click", () => dismissToast(el));
           root.appendChild(el);
           const tid = window.setTimeout(() => dismissToast(el), 4200);
           toastTimers.set(el, tid);
@@ -1936,28 +1093,22 @@
         function dismissToast(el) {
           if (!el.parentNode) return;
           const tid = toastTimers.get(el);
-          if (tid) {
-            clearTimeout(tid);
-            toastTimers.delete(el);
-          }
+          if (tid) { clearTimeout(tid); toastTimers.delete(el); }
           el.classList.add("is-leaving");
-          el.addEventListener("animationend", () => el.remove(), {
-            once: true,
-          });
+          el.addEventListener("animationend", () => el.remove(), { once: true });
         }
 
-        /* ── UTILS ── */
+        /* ============================================================
+           UTILITIES
+           ============================================================ */
         function formatBytes(b) {
           if (!b) return "0 KB";
-          if (b < 1024) return b + " B";
+          if (b < 1024)    return b + " B";
           if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
           return (b / 1048576).toFixed(2) + " MB";
         }
         function slugify(str) {
-          return str
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)/g, "");
+          return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
         }
         const thumbCache = new Map();
         function getThumbB64(frame) {
@@ -1967,25 +1118,17 @@
             const b64 = btoa(frame.thumbnailBinary);
             thumbCache.set(frame.id, b64);
             return b64;
-          } catch {
-            return null;
-          }
+          } catch { return null; }
         }
-        function clearThumbCache(ids) {
-          ids.forEach((id) => thumbCache.delete(id));
-        }
+        function clearThumbCache(ids) { ids.forEach(id => thumbCache.delete(id)); }
         function pngToJpeg(b64, quality) {
           return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
               const c = document.createElement("canvas");
-              c.width = img.width;
-              c.height = img.height;
+              c.width = img.width; c.height = img.height;
               const ctx = c.getContext("2d");
-              if (!ctx) {
-                reject(new Error("Canvas context failed"));
-                return;
-              }
+              if (!ctx) { reject(new Error("Canvas context failed")); return; }
               ctx.fillStyle = "#fff";
               ctx.fillRect(0, 0, c.width, c.height);
               ctx.drawImage(img, 0, 0);
@@ -1999,167 +1142,178 @@
           let total = 0;
           for (const id of state.orderedIds) {
             if (!state.selectedIds.has(id)) continue;
-            const f = state.frames.find((x) => x.id === id);
+            const f = state.frames.find(x => x.id === id);
             if (f && f.thumbnailBinary) total += f.thumbnailBinary.length * 8;
           }
           return total;
         }
 
-        /* ── NAV / TAB SYSTEM ── */
-        function canAccessTab(tabId) {
-          if (tabId === "select") return true;
-          if (tabId === "document") return state.selectedIds.size > 0;
-          if (tabId === "history") return true; // always accessible but shows locked hint
-          return false;
-        }
-
+        /* ============================================================
+           NAV / TAB SYSTEM
+           ============================================================ */
         function syncNav() {
-          const hasSelection = state.selectedIds.size > 0;
-          const tabs = ["select", "document", "history"];
-
-          tabs.forEach((tabId) => {
+          ["select", "history"].forEach(tabId => {
             const btn = document.getElementById(`tab-${tabId}`);
-            const numEl = document.getElementById(`num-${tabId}`);
             const isActive = state.activeTab === tabId;
-            const isDone =
-              (tabId === "select" && hasSelection) ||
-              (tabId === "document" &&
-                hasSelection &&
-                state.activeTab !== "document");
-            const isLocked = tabId === "document" && !hasSelection;
-
-            btn.className =
-              "nav-step" +
-              (isActive ? " is-active" : isDone ? " is-done" : "") +
-              (isLocked ? " is-locked" : "");
+            btn.className = "nav-tab" + (isActive ? " is-active" : "");
             btn.setAttribute("aria-selected", String(isActive));
-            btn.setAttribute("aria-disabled", String(isLocked));
-
-            if (isDone) {
-              numEl.innerHTML = `<i class="ri-check-line" style="font-size:10px"></i>`;
-            } else {
-              numEl.textContent =
-                tabId === "select" ? "1" : tabId === "document" ? "2" : "3";
-            }
           });
-
-          // Unlock badge on document tab
-          const badge = document.getElementById("doc-unlock-badge");
-          if (badge) badge.style.display = hasSelection ? "none" : "";
-
-          // Document panel locked/unlocked views
-          const lockedView = document.getElementById("doc-locked-view");
-          const unlockedView = document.getElementById("doc-unlocked-view");
-          if (lockedView && unlockedView) {
-            lockedView.style.display = hasSelection ? "none" : "flex";
-            unlockedView.style.display = hasSelection ? "flex" : "none";
-          }
         }
-
         function switchTab(tabId) {
-          if (!canAccessTab(tabId) && tabId !== "history") return;
           state.activeTab = tabId;
-
-          document
-            .querySelectorAll(".tab-panel")
-            .forEach((p) => p.classList.remove("is-active"));
+          document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("is-active"));
           const panel = document.getElementById(`panel-${tabId}`);
           if (panel) panel.classList.add("is-active");
-
           syncNav();
           if (tabId === "history") renderHistory();
         }
 
-        /* ── RENDER PRESETS ── */
+        /* ============================================================
+           MORE OPTIONS — dynamic height
+           ============================================================ */
+        function openAdv() {
+          const body   = document.getElementById("adv-body");
+          const toggle = document.getElementById("btn-adv-toggle");
+          body.style.maxHeight = body.scrollHeight + "px";
+          body.classList.add("is-open");
+          toggle.classList.add("is-open");
+          toggle.setAttribute("aria-expanded", "true");
+          body.setAttribute("aria-hidden", "false");
+        }
+        function closeAdv() {
+          const body   = document.getElementById("adv-body");
+          const toggle = document.getElementById("btn-adv-toggle");
+          body.style.maxHeight = "0";
+          body.classList.remove("is-open");
+          toggle.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          body.setAttribute("aria-hidden", "true");
+        }
+        function recalcAdvHeight() {
+          const body = document.getElementById("adv-body");
+          if (body.classList.contains("is-open")) {
+            body.style.maxHeight = body.scrollHeight + "px";
+          }
+        }
+
+        /* ============================================================
+           HISTORY BADGE
+           ============================================================ */
+        function updateHistoryBadge() {
+          const badge = document.getElementById("history-badge");
+          if (!badge) return;
+          const count = state.historyLogs.length;
+          if (count > 0) {
+            badge.textContent = count > 9 ? "9+" : String(count);
+            badge.classList.add("is-visible");
+          } else {
+            badge.classList.remove("is-visible");
+          }
+        }
+
+        /* ============================================================
+           SETTINGS PERSISTENCE
+           ============================================================ */
+        function savePrefs() {
+          postToPlugin({
+            type: "SAVE_PREFS",
+            prefs: {
+              sizeMode:        state.sizeMode,
+              compressionMode: state.compressionMode,
+              padding:         state.padding,
+              activePresetId:  state.activePresetId,
+            }
+          });
+        }
+
+        /* ============================================================
+           RENDER PRESETS
+           ============================================================ */
         function renderPresets() {
-          const row = document.getElementById("presets-row");
+          const row      = document.getElementById("presets-row");
           const existing = row.querySelectorAll(".preset-chip");
           if (existing.length === PRESETS.length) {
             PRESETS.forEach((p, i) =>
-              existing[i].setAttribute(
-                "aria-pressed",
-                String(state.activePresetId === p.id),
-              ),
+              existing[i].setAttribute("aria-pressed", String(state.activePresetId === p.id))
             );
             return;
           }
           row.innerHTML = "";
-          PRESETS.forEach((p) => {
+          PRESETS.forEach(p => {
             const btn = document.createElement("button");
-            btn.className = "preset-chip";
+            btn.className        = "preset-chip";
             btn.dataset.presetId = p.id;
-            btn.setAttribute(
-              "aria-pressed",
-              String(state.activePresetId === p.id),
-            );
-            btn.innerHTML = `<i class="${p.icon}"></i><span>${p.name}</span>`;
+            btn.setAttribute("aria-pressed", String(state.activePresetId === p.id));
+            btn.title = p.name;
+            btn.innerHTML = `<i class="${p.icon}"></i><span class="preset-name">${p.name}</span><span class="preset-sub">${p.sub}</span>`;
             row.appendChild(btn);
           });
         }
 
-        /* ── RENDER SEGMENTED ── */
+        /* ============================================================
+           RENDER SEGMENTED CONTROLS
+           ============================================================ */
         function renderSegmented(id, options, activeValue, dataAttr) {
           const c = document.getElementById(id);
           if (c.children.length === options.length) {
             Array.from(c.children).forEach((btn, i) =>
-              btn.setAttribute(
-                "aria-pressed",
-                String(options[i].v === activeValue),
-              ),
+              btn.setAttribute("aria-pressed", String(options[i].v === activeValue))
             );
             return;
           }
           c.innerHTML = "";
-          options.forEach((opt) => {
+          options.forEach(opt => {
             const btn = document.createElement("button");
-            btn.className = "seg-btn";
-            btn.textContent = opt.l;
+            btn.className         = "seg-btn";
+            btn.textContent       = opt.l;
             btn.dataset[dataAttr] = opt.v;
             btn.setAttribute("aria-pressed", String(opt.v === activeValue));
             c.appendChild(btn);
           });
         }
 
-        /* ── FRAME CARD ── */
+        /* ============================================================
+           FRAME LIST RENDERING
+           ============================================================ */
         function renderFrameList() {
           const container = document.getElementById("frame-list");
+
+          Array.from(container.childNodes).forEach(node => {
+            if (node.nodeType === 1 && !node.classList.contains("frame-card")) node.remove();
+          });
+
           if (state.frames.length === 0) {
-            container.innerHTML = `<div class="state-center">
-          <div class="state-icon"><i class="ri-layouts-line"></i></div>
-          <div class="state-title">No frames selected</div>
-          <div class="state-desc">Select one or more frames in Figma to begin composing your PDF.</div>
-        </div>`;
+            container.innerHTML = `
+              <div class="state-center">
+                <div class="state-icon branded"><i class="ri-file-pdf-2-line"></i></div>
+                <div class="state-title">No frames selected</div>
+                <div class="state-desc">Select frames on your Figma canvas — or tap <strong>Find All</strong> to load every frame on this page.</div>
+              </div>`;
             return;
           }
+
           const desiredIds = state.orderedIds;
-          container.querySelectorAll(".frame-card[data-id]").forEach((el) => {
+          container.querySelectorAll(".frame-card[data-id]").forEach(el => {
             if (!desiredIds.includes(el.dataset.id)) el.remove();
           });
+
           let refNode = null;
           for (let i = desiredIds.length - 1; i >= 0; i--) {
-            const id = desiredIds[i];
-            const frame = state.frames.find((f) => f.id === id);
+            const id    = desiredIds[i];
+            const frame = state.frames.find(f => f.id === id);
             if (!frame) continue;
             let card = container.querySelector(`.frame-card[data-id="${id}"]`);
-            if (!card) {
-              card = buildFrameCard(frame);
-            } else {
-              updateFrameCard(card, frame);
-            }
-            if (refNode) {
-              container.insertBefore(card, refNode);
-            } else {
-              container.appendChild(card);
-            }
+            if (!card) card = buildFrameCard(frame);
+            else       updateFrameCard(card, frame);
+            if (refNode) container.insertBefore(card, refNode);
+            else         container.appendChild(card);
             refNode = card;
           }
         }
 
         function getSelectionOrder(id) {
-          const queue = state.orderedIds.filter((i) =>
-            state.selectedIds.has(i),
-          );
-          const idx = queue.indexOf(id);
+          const queue = state.orderedIds.filter(i => state.selectedIds.has(i));
+          const idx   = queue.indexOf(id);
           return idx >= 0 ? idx + 1 : null;
         }
 
@@ -2175,52 +1329,55 @@
         }
 
         function populateFrameCard(card, frame) {
-          const id = frame.id;
+          const id         = frame.id;
           const isSelected = state.selectedIds.has(id);
-          const order = getSelectionOrder(id);
-          const b64 = getThumbB64(frame);
-
+          const order      = getSelectionOrder(id);
+          const b64        = getThumbB64(frame);
           card.classList.toggle("is-selected", isSelected);
-
           const thumbHtml = b64
             ? `<img class="frame-thumb" src="data:image/png;base64,${b64}" alt="${frame.name} preview" loading="lazy">`
-            : `<div class="frame-thumb-placeholder"><i class="ri-image-2-line"></i></div>`;
-
+            : `<div class="frame-thumb-placeholder"><div class="thumb-loading-inner"></div></div>`;
           card.innerHTML = `
-        <div class="frame-card-main">
-          <div class="frame-thumb-col" style="height:56px">${thumbHtml}</div>
-          <div class="frame-info-col">
-            <div class="frame-name">${frame.name}</div>
-            <div class="frame-dims">
-              <span>${frame.width}&thinsp;×&thinsp;${frame.height}</span>
-              <span class="frame-dims-dot"></span>
-              <span>${frame.width >= frame.height ? "Landscape" : "Portrait"}</span>
-            </div>
-          </div>
-          <div class="frame-actions-col">
-            ${order ? `<span class="frame-badge-order">${order}</span>` : ""}
-            <div class="frame-check-btn" aria-label="${isSelected ? "Deselect" : "Select"} frame">
-              <i class="ri-check-line"></i>
-            </div>
-            <div class="drag-handle" aria-hidden="true"><i class="ri-drag-move-2-line"></i></div>
-          </div>
-        </div>`;
+            <div class="frame-card-main">
+              <div class="frame-thumb-col">${thumbHtml}</div>
+              <div class="frame-info-col">
+                <div class="frame-name">${frame.name}</div>
+                <div class="frame-dims">
+                  <span>${frame.width}&thinsp;&times;&thinsp;${frame.height}</span>
+                  <span class="frame-dims-dot"></span>
+                  <span>${frame.width >= frame.height ? "Landscape" : "Portrait"}</span>
+                </div>
+              </div>
+              <div class="frame-actions-col">
+                ${order ? `<span class="frame-badge-order" title="Export order">${order}</span>` : ""}
+                <button type="button" class="frame-check-btn" role="checkbox"
+                  aria-checked="${isSelected}" aria-label="${isSelected ? "Deselect" : "Select"} ${frame.name}">
+                  <i class="ri-check-line"></i>
+                </button>
+                <div class="drag-handle" aria-hidden="true" title="Drag to reorder">
+                  <i class="ri-drag-move-2-line"></i>
+                </div>
+              </div>
+            </div>`;
         }
 
         function updateFrameCard(card, frame) {
-          const id = frame.id;
+          const id         = frame.id;
           const isSelected = state.selectedIds.has(id);
           card.classList.toggle("is-selected", isSelected);
+
           const nameEl = card.querySelector(".frame-name");
           if (nameEl) nameEl.textContent = frame.name;
+
           const actCol = card.querySelector(".frame-actions-col");
           if (actCol) {
             const order = getSelectionOrder(id);
-            let badge = actCol.querySelector(".frame-badge-order");
+            let badge   = actCol.querySelector(".frame-badge-order");
             if (order) {
               if (!badge) {
                 badge = document.createElement("span");
                 badge.className = "frame-badge-order";
+                badge.title = "Export order";
                 actCol.insertBefore(badge, actCol.firstChild);
               }
               badge.textContent = order;
@@ -2228,25 +1385,31 @@
               badge.remove();
             }
             const chk = actCol.querySelector(".frame-check-btn");
-            if (chk)
-              chk.setAttribute(
-                "aria-label",
-                `${isSelected ? "Deselect" : "Select"} frame`,
-              );
+            if (chk) {
+              chk.setAttribute("aria-checked", String(isSelected));
+              chk.setAttribute("aria-label", `${isSelected ? "Deselect" : "Select"} ${frame.name}`);
+            }
           }
         }
 
         function attachFrameCardEvents(card, id) {
-          // Click to toggle selection
-          card.addEventListener("click", (e) => {
+          card.addEventListener("click", e => {
             if (e.target.closest(".drag-handle")) return;
-            state.selectedIds.has(id)
-              ? state.selectedIds.delete(id)
-              : state.selectedIds.add(id);
-            renderFrameList();
+            if (state.selectedIds.has(id)) {
+              state.selectedIds.delete(id);
+            } else {
+              state.selectedIds.add(id);
+            }
+            // Update all cards' order badges without re-rendering thumbnails
+            const frame = state.frames.find(f => f.id === id);
+            document.querySelectorAll(".frame-card[data-id]").forEach(c => {
+              const fid = c.dataset.id;
+              const f   = state.frames.find(fr => fr.id === fid);
+              if (f) updateFrameCard(c, f);
+            });
             syncUI();
           });
-          // Drag
+
           card.addEventListener("dragstart", () => {
             state.dragSourceId = id;
             card.classList.add("is-dragging");
@@ -2254,23 +1417,19 @@
           card.addEventListener("dragend", () => {
             state.dragSourceId = null;
             card.classList.remove("is-dragging");
-            document
-              .querySelectorAll(".frame-card")
-              .forEach((c) => c.classList.remove("drag-over"));
+            document.querySelectorAll(".frame-card").forEach(c => c.classList.remove("drag-over"));
           });
-          card.addEventListener("dragover", (e) => {
+          card.addEventListener("dragover", e => {
             e.preventDefault();
             if (state.dragSourceId !== id) card.classList.add("drag-over");
           });
-          card.addEventListener("dragleave", () =>
-            card.classList.remove("drag-over"),
-          );
-          card.addEventListener("drop", (e) => {
+          card.addEventListener("dragleave", () => card.classList.remove("drag-over"));
+          card.addEventListener("drop", e => {
             e.preventDefault();
             card.classList.remove("drag-over");
             if (!state.dragSourceId || state.dragSourceId === id) return;
             const fromIdx = state.orderedIds.indexOf(state.dragSourceId);
-            const toIdx = state.orderedIds.indexOf(id);
+            const toIdx   = state.orderedIds.indexOf(id);
             if (fromIdx < 0 || toIdx < 0) return;
             state.orderedIds.splice(fromIdx, 1);
             state.orderedIds.splice(toIdx, 0, state.dragSourceId);
@@ -2279,179 +1438,157 @@
           });
         }
 
-        /* ── RENDER HISTORY ── */
+        /* ============================================================
+           HISTORY RENDERING
+           ============================================================ */
         function renderHistory() {
           const list = document.getElementById("history-list");
+          updateHistoryBadge();
           if (!state.historyLogs.length) {
-            list.innerHTML = `<div class="state-center" style="padding:24px">
-          <div class="state-icon"><i class="ri-history-line"></i></div>
-          <div class="state-title">No exports yet</div>
-          <div class="state-desc">Exported PDFs will appear here with size and timestamp.</div>
-        </div>`;
+            list.innerHTML = `
+              <div class="state-center" style="padding:24px">
+                <div class="state-icon"><i class="ri-history-line"></i></div>
+                <div class="state-title">No exports yet</div>
+                <div class="state-desc">Your exported PDFs will appear here. You can re-download any past export.</div>
+              </div>`;
             return;
           }
-          list.innerHTML = state.historyLogs
-            .map(
-              (log) => `
-        <div class="history-entry">
-          <div class="history-icon"><i class="ri-file-pdf-2-line"></i></div>
-          <div class="history-info">
-            <div class="history-name">${log.fileName}</div>
-            <div class="history-meta">${log.size} · ${log.pages} pages · ${log.timestamp}</div>
-          </div>
-          <button class="btn-redownload" data-log-id="${log.id}" title="Re-download" aria-label="Re-download ${log.fileName}">
-            <i class="ri-download-cloud-2-line"></i>
-          </button>
-        </div>`,
-            )
-            .join("");
+          list.innerHTML = state.historyLogs.map(log => `
+            <div class="history-entry">
+              <div class="history-icon"><i class="ri-file-pdf-2-line"></i></div>
+              <div class="history-info">
+                <div class="history-name">${log.fileName}</div>
+                <div class="history-meta">${log.size} · ${log.pages} page${log.pages !== 1 ? "s" : ""} · ${log.timestamp}</div>
+                <div class="history-preset">${log.presetName}</div>
+              </div>
+              <button class="btn-redownload" data-log-id="${log.id}"
+                title="Re-download" aria-label="Re-download ${log.fileName}">
+                <i class="ri-download-cloud-2-line"></i>
+              </button>
+            </div>`).join("");
         }
 
-        /* ── SYNC UI (master) ── */
+        /* ============================================================
+           MASTER SYNC
+           ============================================================ */
         function syncUI() {
           const selectedCount = state.selectedIds.size;
-          const totalCount = state.frames.length;
+          const totalCount    = state.frames.length;
 
           // Footer
-          const s =
-            selectedCount === 1
-              ? "1 frame selected"
-              : `${selectedCount} frames selected`;
-          document.getElementById("footer-count").textContent = s;
+          const countLabel = selectedCount === 1 ? "1 frame selected" : `${selectedCount} frames selected`;
+          document.getElementById("footer-count").textContent   = countLabel;
+          document.getElementById("footer-eyebrow").textContent = selectedCount === 0 ? "Select frames to begin" : "Ready to export";
 
-          // Select All btn
+          // Select All button label
           const saBtn = document.getElementById("btn-select-all");
-          saBtn.textContent =
-            totalCount > 0 && selectedCount === totalCount
-              ? "Deselect All"
-              : "Select All";
+          saBtn.textContent = (totalCount > 0 && selectedCount === totalCount) ? "Deselect All" : "Select All";
 
-          // Export btn
-          document.getElementById("btn-export").disabled = selectedCount === 0;
+          // Export button
+          const exportBtn = document.getElementById("btn-export");
+          exportBtn.disabled = selectedCount === 0;
+          exportBtn.title    = selectedCount === 0 ? "Select frames on the canvas first" : "";
 
-          // Margin slider
+          // Margin slider + note
           const slider = document.getElementById("margin-slider");
-          slider.value = state.padding;
+          slider.value    = state.padding;
           slider.disabled = state.sizeMode === "original";
-          document.getElementById("margin-value-badge").textContent =
-            `${state.padding} mm`;
+          document.getElementById("margin-value-badge").textContent = `${state.padding} mm`;
           slider.setAttribute("aria-valuenow", state.padding);
+          document.getElementById("margin-note").hidden = state.sizeMode !== "original";
 
           syncEstimator();
           syncNav();
-
-          // If no selection and on document tab, push back
-          if (selectedCount === 0 && state.activeTab === "document") {
-            switchTab("select");
-          }
         }
 
         function syncEstimator() {
           const rawBytes = estimateRawBytes();
-          const factor = COMPRESSION_FACTORS[state.compressionMode] ?? 1;
+          const estEl    = document.getElementById("est-size");
+          const redEl    = document.getElementById("est-reduction");
+
+          if (rawBytes === 0) {
+            estEl.textContent   = "—";
+            redEl.className     = "badge-neutral";
+            redEl.textContent   = "Select frames";
+            return;
+          }
+
+          const factor     = COMPRESSION_FACTORS[state.compressionMode] ?? 1;
           const finalBytes = Math.round(rawBytes * factor);
-          const pct =
-            rawBytes > 0
-              ? Math.round(((rawBytes - finalBytes) / rawBytes) * 100)
-              : 0;
-          document.getElementById("est-size").textContent =
-            `${formatBytes(rawBytes)} → ${formatBytes(finalBytes)}`;
-          const redEl = document.getElementById("est-reduction");
+          const pct        = rawBytes > 0 ? Math.round(((rawBytes - finalBytes) / rawBytes) * 100) : 0;
+          estEl.textContent = `~${formatBytes(finalBytes)}`;
+
           if (pct > 0) {
-            redEl.className = "badge-green";
-            redEl.textContent = `-${pct}% Saved`;
+            redEl.className   = "badge-green";
+            redEl.textContent = `−${pct}% saved`;
           } else {
-            redEl.className = "badge-neutral";
+            redEl.className   = "badge-neutral";
             redEl.textContent = "Lossless";
           }
         }
 
-        /* ── EXPORT PIPELINE ── */
+        /* ============================================================
+           EXPORT PIPELINE
+           ============================================================ */
         function startExport() {
-          const queue = state.orderedIds.filter((id) =>
-            state.selectedIds.has(id),
-          );
+          const queue = state.orderedIds.filter(id => state.selectedIds.has(id));
           if (!queue.length) return;
           _pdf = null;
-          state.exporting = true;
-          state.exportQueue = queue;
-          state.exportIndex = 0;
+          state.exporting        = true;
+          state.exportQueue      = queue;
+          state.exportIndex      = 0;
           state.exportTotalBytes = 0;
-          setOverlayProgress(0, `Staging page 1 of ${queue.length}…`);
+          setOverlayProgress(0, `Preparing page 1 of ${queue.length}…`, "");
           document.getElementById("export-overlay").classList.add("is-active");
+          setTimeout(() => document.getElementById("btn-cancel-export").focus(), 60);
           postToPlugin({ type: "EXPORT_SINGLE_FRAME", id: queue[0] });
         }
 
-        function setOverlayProgress(pct, statusText) {
-          document.getElementById("overlay-percent").textContent = `${pct}%`;
-          document.getElementById("overlay-status").textContent = statusText;
-          document.getElementById("overlay-progress-fill").style.width =
-            `${pct}%`;
-          document
-            .getElementById("overlay-progress-bar")
-            .setAttribute("aria-valuenow", pct);
-          // Ring
+        function setOverlayProgress(pct, statusText, stageText) {
+          document.getElementById("overlay-percent").textContent       = `${pct}%`;
+          document.getElementById("overlay-status").textContent        = statusText;
+          document.getElementById("overlay-stage").textContent         = stageText || "";
+          document.getElementById("overlay-progress-fill").style.width = `${pct}%`;
+          document.getElementById("overlay-progress-bar").setAttribute("aria-valuenow", pct);
           const circumference = 150.796;
-          const offset = circumference - (pct / 100) * circumference;
-          document.getElementById("ring-fill").style.strokeDashoffset = offset;
+          document.getElementById("ring-fill").style.strokeDashoffset =
+            circumference - (pct / 100) * circumference;
         }
 
         function cancelExport() {
           state.exporting = false;
           _pdf = null;
-          document
-            .getElementById("export-overlay")
-            .classList.remove("is-active");
+          document.getElementById("export-overlay").classList.remove("is-active");
         }
 
         async function processSingleFrameReady(msg) {
           if (!state.exporting) return;
           const queue = state.exportQueue;
-          const idx = state.exportIndex;
+          const idx   = state.exportIndex;
           if (msg.id !== queue[idx]) return;
           try {
             const { jsPDF } = window.jspdf;
-            const useJpeg = state.compressionMode !== "none";
-            const quality = COMPRESSION_QUALITY[state.compressionMode];
-            const b64 = btoa(msg.imageBinary);
-            const imgUrl = useJpeg
-              ? await pngToJpeg(b64, quality)
-              : "data:image/png;base64," + b64;
+            const useJpeg   = state.compressionMode !== "none";
+            const quality   = COMPRESSION_QUALITY[state.compressionMode];
+            const b64       = btoa(msg.imageBinary);
+            const imgUrl    = useJpeg ? await pngToJpeg(b64, quality) : "data:image/png;base64," + b64;
             state.exportTotalBytes += Math.round(imgUrl.length * 0.75);
 
-            const over = state.frameOverrides[msg.id] || {};
-            const sizeMode =
-              over.sizeMode && over.sizeMode !== "inherit"
-                ? over.sizeMode
-                : state.sizeMode;
-            const padding =
-              over.padding != null && over.padding !== "inherit"
-                ? over.padding
-                : state.padding;
+            const sizeMode = state.sizeMode;
+            const padding  = state.padding;
 
             let pdfW, pdfH;
-            if (sizeMode === "a4") {
-              pdfW = PAGE_DIMS.a4.w;
-              pdfH = PAGE_DIMS.a4.h;
-            } else if (sizeMode === "letter") {
-              pdfW = PAGE_DIMS.letter.w;
-              pdfH = PAGE_DIMS.letter.h;
-            } else {
-              pdfW = msg.width * PX_TO_MM;
-              pdfH = msg.height * PX_TO_MM;
-            }
+            if      (sizeMode === "a4")     { pdfW = PAGE_DIMS.a4.w;     pdfH = PAGE_DIMS.a4.h; }
+            else if (sizeMode === "letter") { pdfW = PAGE_DIMS.letter.w; pdfH = PAGE_DIMS.letter.h; }
+            else                            { pdfW = msg.width * PX_TO_MM; pdfH = msg.height * PX_TO_MM; }
 
             const orientation = pdfW >= pdfH ? "landscape" : "portrait";
-            const fmt = sizeMode === "original" ? [pdfW, pdfH] : sizeMode;
+            const fmt         = sizeMode === "original" ? [pdfW, pdfH] : sizeMode;
 
             if (!_pdf) {
-              const coverEnabled =
-                document.getElementById("toggle-cover").checked;
+              const coverEnabled = document.getElementById("toggle-cover").checked;
               _pdf = new jsPDF({ orientation, unit: "mm", format: fmt });
-              if (coverEnabled) {
-                addCoverPage(_pdf, pdfW, pdfH);
-                _pdf.addPage(fmt, orientation);
-              }
+              if (coverEnabled) { addCoverPage(_pdf, pdfW, pdfH); _pdf.addPage(fmt, orientation); }
             } else {
               _pdf.addPage(fmt, orientation);
             }
@@ -2461,28 +1598,25 @@
             } else {
               const maxW = pdfW - padding * 2;
               const maxH = pdfH - padding * 2;
-              const asp = msg.width / msg.height;
+              const asp  = msg.width / msg.height;
               const bAsp = maxW / maxH;
-              const dW = asp > bAsp ? maxW : maxH * asp;
-              const dH = asp > bAsp ? maxW / asp : maxH;
-              const rx = padding + (maxW - dW) / 2;
-              const ry = padding + (maxH - dH) / 2;
+              const dW   = asp > bAsp ? maxW : maxH * asp;
+              const dH   = asp > bAsp ? maxW / asp : maxH;
+              const rx   = padding + (maxW - dW) / 2;
+              const ry   = padding + (maxH - dH) / 2;
               _pdf.addImage(imgUrl, useJpeg ? "JPEG" : "PNG", rx, ry, dW, dH);
             }
 
             const nextIdx = idx + 1;
-            const total = queue.length;
-            const pct = Math.round((nextIdx / total) * 100);
+            const total   = queue.length;
+            const pct     = Math.round((nextIdx / total) * 100);
             state.exportIndex = nextIdx;
-            setOverlayProgress(
-              pct,
-              nextIdx < total
-                ? `Staging page ${nextIdx + 1} of ${total}…`
-                : "Finalising…",
-            );
+
             if (nextIdx < total) {
+              setOverlayProgress(pct, `Page ${nextIdx + 1} of ${total}`, "");
               postToPlugin({ type: "EXPORT_SINGLE_FRAME", id: queue[nextIdx] });
             } else {
+              setOverlayProgress(pct, "Assembling PDF…", "");
               finalisePdf(total);
             }
           } catch (err) {
@@ -2492,167 +1626,117 @@
         }
 
         function addCoverPage(pdf, w, h) {
-          const title =
-            document.getElementById("cover-title").value ||
-            "FrameStack Export Delivery";
-          const subtitle =
-            document.getElementById("cover-subtitle").value ||
-            "Design layout specifications";
-          const themeBtn = document.querySelector(
-            ".cover-theme-btn[aria-pressed='true']",
-          );
-          const theme = themeBtn ? themeBtn.dataset.theme : "minimal";
-          const date = new Date().toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          });
+          const title    = document.getElementById("cover-title").value    || "FrameStack Export Delivery";
+          const subtitle = document.getElementById("cover-subtitle").value || "Design layout specifications";
+          const themeBtn = document.querySelector(".cover-theme-btn[aria-pressed='true']");
+          const theme    = themeBtn ? themeBtn.dataset.theme : "minimal";
+          const date     = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
           if (theme === "bold") {
-            pdf.setFillColor(15, 23, 42);
-            pdf.rect(0, 0, w, h, "F");
-            pdf.setFillColor(0, 20, 209);
-            pdf.rect(20, h / 2 - 28, 28, 2.5, "F");
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(20);
+            pdf.setFillColor(15, 23, 42);  pdf.rect(0, 0, w, h, "F");
+            pdf.setFillColor(0, 20, 209);  pdf.rect(20, h / 2 - 28, 28, 2.5, "F");
+            pdf.setTextColor(255, 255, 255); pdf.setFont("helvetica", "bold");   pdf.setFontSize(20);
             pdf.text(title, 20, h / 2 - 12);
-            pdf.setTextColor(148, 163, 184);
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(10.5);
+            pdf.setTextColor(148, 163, 184); pdf.setFont("helvetica", "normal"); pdf.setFontSize(10.5);
             pdf.text(subtitle, 20, h / 2);
-            pdf.setTextColor(71, 85, 105);
-            pdf.setFontSize(8);
+            pdf.setTextColor(71, 85, 105);  pdf.setFontSize(8);
             pdf.text("Salkom Design Studio · " + date, 20, h - 18);
-          } else if (theme === "stripe") {
-            pdf.setFillColor(255, 255, 255);
-            pdf.rect(0, 0, w, h, "F");
-            pdf.setFillColor(0, 20, 209);
-            pdf.rect(0, 0, 10, h, "F");
-            pdf.setTextColor(15, 23, 42);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(18);
+
+          } else if (theme === "accent") {
+            pdf.setFillColor(255, 255, 255); pdf.rect(0, 0, w, h, "F");
+            pdf.setFillColor(0, 20, 209);    pdf.rect(0, 0, 10, h, "F");
+            pdf.setTextColor(15, 23, 42); pdf.setFont("helvetica", "bold");   pdf.setFontSize(18);
             pdf.text(title, 26, h / 2 - 10);
-            pdf.setTextColor(100, 116, 139);
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(10);
+            pdf.setTextColor(100, 116, 139); pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
             pdf.text(subtitle, 26, h / 2);
-            pdf.setTextColor(148, 163, 184);
-            pdf.setFontSize(8.5);
+            pdf.setTextColor(148, 163, 184); pdf.setFontSize(8.5);
             pdf.text(date, 26, h / 2 + 10);
+
+          } else if (theme === "grid") {
+            pdf.setFillColor(252, 252, 253); pdf.rect(0, 0, w, h, "F");
+            pdf.setFillColor(203, 213, 225);
+            const gs = 8;
+            for (let gx = gs; gx < w; gx += gs)
+              for (let gy = gs; gy < h; gy += gs) pdf.circle(gx, gy, 0.4, "F");
+            pdf.setTextColor(11, 15, 26); pdf.setFont("helvetica", "bold");   pdf.setFontSize(20);
+            pdf.text(title, 22, h / 2 - 12);
+            pdf.setTextColor(100, 116, 139); pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+            pdf.text(subtitle, 22, h / 2);
+            pdf.setTextColor(148, 163, 184); pdf.setFontSize(8);
+            pdf.text("Salkom Design Studio · " + date, 22, h - 18);
+
           } else {
-            pdf.setFillColor(248, 250, 252);
-            pdf.rect(0, 0, w, h, "F");
-            pdf.setTextColor(11, 15, 26);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(18);
+            pdf.setFillColor(248, 250, 252); pdf.rect(0, 0, w, h, "F");
+            pdf.setTextColor(11, 15, 26); pdf.setFont("helvetica", "bold");   pdf.setFontSize(18);
             pdf.text(title, 20, 48);
-            pdf.setTextColor(100, 116, 139);
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(10);
+            pdf.setTextColor(100, 116, 139); pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
             pdf.text(subtitle, 20, 58);
-            pdf.setTextColor(148, 163, 184);
-            pdf.setFontSize(8);
-            pdf.text(
-              "Salkom Design Studio © " + new Date().getFullYear(),
-              20,
-              h - 20,
-            );
+            pdf.setTextColor(148, 163, 184); pdf.setFontSize(8);
+            pdf.text("Salkom Design Studio © " + new Date().getFullYear(), 20, h - 20);
           }
         }
 
         function finalisePdf(totalPages) {
           try {
-            const docTitle =
-              document.getElementById("meta-title").value ||
-              "FrameStack PDF Export";
-            const docAuthor =
-              document.getElementById("meta-author").value ||
-              "Salkom Design Studio";
-            const docSubject =
-              document.getElementById("meta-subject").value ||
-              "Design Delivery";
-            const docKeywords =
-              document.getElementById("meta-keywords").value ||
-              "figma, pdf, framestack";
+            const docTitle    = document.getElementById("meta-title").value    || "FrameStack PDF Export";
+            const docAuthor   = document.getElementById("meta-author").value   || "Salkom Design Studio";
+            const docSubject  = document.getElementById("meta-subject").value  || "Design Delivery";
+            const docKeywords = document.getElementById("meta-keywords").value || "figma, pdf, framestack";
+            const customName  = document.getElementById("meta-filename").value.trim();
+            const saveName    = (customName ? slugify(customName) : slugify(docTitle)) + ".pdf";
+
             _pdf.setProperties({
-              title: docTitle,
-              author: docAuthor,
-              subject: docSubject,
-              keywords: docKeywords,
-              creator: "FrameStack PDF · Salkom Design Studio",
+              title: docTitle, author: docAuthor, subject: docSubject,
+              keywords: docKeywords, creator: "FrameStack PDF · Salkom Design Studio",
             });
-            const saveName = slugify(docTitle) + ".pdf";
             const pdfDataUri = _pdf.output("datauristring");
-            const base64Pdf = pdfDataUri.split(",")[1];
+            const base64Pdf  = pdfDataUri.split(",")[1];
             _pdf.save(saveName);
-            showToast(
-              `PDF exported — ${formatBytes(state.exportTotalBytes)}`,
-              "success",
-            );
-            logExportEntry(
-              saveName,
-              state.exportTotalBytes,
-              totalPages,
-              base64Pdf,
-            );
+            logExportEntry(saveName, state.exportTotalBytes, totalPages, base64Pdf);
+            cancelExport();
+            showToast(`PDF saved — ${saveName} (${formatBytes(state.exportTotalBytes)})`, "success");
+            setTimeout(() => switchTab("history"), 700);
           } catch (err) {
             showToast(`Save failed: ${err.message}`, "error");
+            cancelExport();
           }
-          cancelExport();
         }
 
-        /* ── HISTORY LOGIC ── */
+        /* ============================================================
+           HISTORY LOGIC
+           ============================================================ */
         function logExportEntry(fileName, totalSize, pages, base64Pdf) {
-          const presetName =
-            PRESETS.find((p) => p.id === state.activePresetId)?.name ||
-            "Custom";
+          const presetName = PRESETS.find(p => p.id === state.activePresetId)?.name || "Custom";
           const entry = {
-            id: Date.now(),
+            id:        Date.now(),
             fileName,
-            timestamp: new Date().toLocaleString("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            size: formatBytes(totalSize),
+            timestamp: new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+            size:      formatBytes(totalSize),
             pages,
             presetName,
           };
           state.historyLogs.unshift(entry);
-          if (state.historyLogs.length > MAX_HISTORY)
-            state.historyLogs.length = MAX_HISTORY;
+          if (state.historyLogs.length > MAX_HISTORY) state.historyLogs.length = MAX_HISTORY;
           postToPlugin({ type: "SAVE_HISTORY_LOGS", logs: state.historyLogs });
-          if (base64Pdf)
-            postToPlugin({
-              type: "SAVE_PDF_BLOB",
-              id: entry.id,
-              base64: base64Pdf,
-            });
-          try {
-            localStorage.setItem(
-              HISTORY_LOG_KEY,
-              JSON.stringify(state.historyLogs),
-            );
-          } catch {}
+          if (base64Pdf) postToPlugin({ type: "SAVE_PDF_BLOB", id: entry.id, base64: base64Pdf });
+          updateHistoryBadge();
         }
+
         function triggerRedownload(logId, btn) {
           btn.disabled = true;
-          btn.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div>`;
+          btn.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:2px"></div>`;
           postToPlugin({ type: "FETCH_PDF_DATA", id: logId });
         }
+
         function completeRedownload(base64, logId) {
-          const log = state.historyLogs.find((l) => l.id === logId);
+          const log      = state.historyLogs.find(l => l.id === logId);
           const saveName = log ? log.fileName : "framestack-export.pdf";
           try {
-            const byteArr = Uint8Array.from(atob(base64), (c) =>
-              c.charCodeAt(0),
-            );
-            const blob = new Blob([byteArr], { type: "application/pdf" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = saveName;
+            const byteArr = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+            const blob    = new Blob([byteArr], { type: "application/pdf" });
+            const url     = URL.createObjectURL(blob);
+            const link    = document.createElement("a");
+            link.href = url; link.download = saveName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -2663,19 +1747,44 @@
           }
           resetRedownloadButtons();
         }
+
         function resetRedownloadButtons() {
-          document.querySelectorAll(".btn-redownload").forEach((btn) => {
+          document.querySelectorAll(".btn-redownload").forEach(btn => {
             btn.disabled = false;
             btn.innerHTML = `<i class="ri-download-cloud-2-line"></i>`;
           });
         }
 
-        /* ── PLUGIN MESSAGE HANDLER ── */
+        /* ============================================================
+           PLUGIN MESSAGE HANDLER
+           ============================================================ */
         function handlePluginMessage(msg) {
           switch (msg.type) {
+            case "USER_READY": {
+              if (msg.name) {
+                const authorEl = document.getElementById("meta-author");
+                if (authorEl && !authorEl.value) authorEl.value = msg.name;
+              }
+              break;
+            }
+            case "PREFS_READY": {
+              if (msg.prefs) {
+                state.sizeMode        = msg.prefs.sizeMode        || "a4";
+                state.compressionMode = msg.prefs.compressionMode || "average";
+                state.padding         = msg.prefs.padding         ?? 12;
+                state.activePresetId  = msg.prefs.activePresetId  || "client-deck";
+                renderSegmented("seg-sizes",       SIZE_OPTIONS,        state.sizeMode,        "sizeMode");
+                renderSegmented("seg-compression", COMPRESSION_OPTIONS, state.compressionMode, "compression");
+                renderPresets();
+                syncUI();
+              }
+              break;
+            }
             case "LOADING":
-              document.getElementById("frame-list").innerHTML =
-                `<div class="state-center"><div class="spinner"></div><div class="state-desc">Analysing canvas layers…</div></div>`;
+              document.getElementById("frame-list").innerHTML = `
+                <div class="frame-skeleton"></div>
+                <div class="frame-skeleton"></div>
+                <div class="frame-skeleton" style="opacity:.6"></div>`;
               break;
             case "NO_FRAMES":
               state.frames = [];
@@ -2688,24 +1797,18 @@
             case "FRAMES_LOADED": {
               const { frames, isRefresh } = msg;
               const prevSelected = new Set(state.selectedIds);
-              const removedIds = state.orderedIds.filter(
-                (id) => !frames.some((f) => f.id === id),
-              );
+              const removedIds   = state.orderedIds.filter(id => !frames.some(f => f.id === id));
               clearThumbCache(removedIds);
               state.frames = frames;
-              const newIds = frames.map((f) => f.id);
-              const preserved = state.orderedIds.filter((id) =>
-                newIds.includes(id),
-              );
-              const added = newIds.filter((id) => !preserved.includes(id));
+              const newIds    = frames.map(f => f.id);
+              const preserved = state.orderedIds.filter(id => newIds.includes(id));
+              const added     = newIds.filter(id => !preserved.includes(id));
               state.orderedIds = [...preserved, ...added];
               state.selectedIds.clear();
               if (isRefresh) {
-                state.orderedIds.forEach((id) => {
-                  if (prevSelected.has(id)) state.selectedIds.add(id);
-                });
+                state.orderedIds.forEach(id => { if (prevSelected.has(id)) state.selectedIds.add(id); });
               } else {
-                state.orderedIds.forEach((id) => state.selectedIds.add(id));
+                state.orderedIds.forEach(id => state.selectedIds.add(id));
               }
               renderFrameList();
               syncUI();
@@ -2715,15 +1818,12 @@
               processSingleFrameReady(msg);
               break;
             case "SINGLE_FRAME_FAILED":
-              showToast(
-                `Export failed: ${msg.reason || "Unknown error"}`,
-                "error",
-              );
+              showToast(`Export failed: ${msg.reason || "Unknown error"}`, "error");
               cancelExport();
               break;
             case "HISTORY_LOGS_READY":
               state.historyLogs = Array.isArray(msg.logs) ? msg.logs : [];
-              renderHistory();
+              updateHistoryBadge();
               break;
             case "PDF_DATA_READY":
               completeRedownload(msg.base64, msg.id);
@@ -2734,213 +1834,173 @@
               break;
           }
         }
-        window.addEventListener("message", (e) => {
+
+        window.addEventListener("message", e => {
           const msg = e.data?.pluginMessage;
           if (msg) handlePluginMessage(msg);
         });
 
-        /* ── EVENT BINDINGS ── */
+        /* ============================================================
+           EVENT BINDINGS
+           ============================================================ */
 
         // Theme toggle
         document.getElementById("btn-theme").addEventListener("click", () => {
-          const isDark =
-            document.documentElement.getAttribute("data-theme") === "dark";
-          document.documentElement.setAttribute(
-            "data-theme",
-            isDark ? "light" : "dark",
-          );
-          document.querySelector("#btn-theme i").className = isDark
-            ? "ri-moon-clear-line"
-            : "ri-sun-line";
+          const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+          document.documentElement.setAttribute("data-theme", isDark ? "light" : "dark");
+          document.querySelector("#btn-theme i").className = isDark ? "ri-moon-clear-line" : "ri-sun-line";
           showToast(isDark ? "Light mode" : "Dark mode", "info");
-          renderFrameList();
         });
 
         // Close
-        document
-          .getElementById("btn-close")
-          .addEventListener("click", () => postToPlugin({ type: "CLOSE" }));
+        document.getElementById("btn-close").addEventListener("click", () =>
+          postToPlugin({ type: "CLOSE" })
+        );
 
         // Nav clicks
-        document.getElementById("app-nav").addEventListener("click", (e) => {
-          const btn = e.target.closest(".nav-step[data-tab]");
-          if (!btn || btn.classList.contains("is-locked")) return;
+        document.getElementById("app-nav").addEventListener("click", e => {
+          const btn = e.target.closest(".nav-tab[data-tab]");
+          if (!btn) return;
           switchTab(btn.dataset.tab);
         });
 
-        // Advanced settings toggle
-        document
-          .getElementById("btn-adv-toggle")
-          .addEventListener("click", () => {
-            const body = document.getElementById("adv-body");
-            const toggle = document.getElementById("btn-adv-toggle");
-            const isOpen = body.classList.toggle("is-open");
-            toggle.classList.toggle("is-open", isOpen);
-            toggle.setAttribute("aria-expanded", String(isOpen));
-            body.setAttribute("aria-hidden", String(!isOpen));
-          });
-
-        // Select All
-        document
-          .getElementById("btn-select-all")
-          .addEventListener("click", () => {
-            if (
-              state.selectedIds.size === state.frames.length &&
-              state.frames.length > 0
-            ) {
-              state.selectedIds.clear();
-            } else {
-              state.orderedIds.forEach((id) => state.selectedIds.add(id));
-            }
-            renderFrameList();
-            syncUI();
-          });
-
-        // Margin slider
-        let marginTimer = null;
-        document
-          .getElementById("margin-slider")
-          .addEventListener("input", (e) => {
-            state.padding = parseInt(e.target.value, 10);
-            state.activePresetId = "";
-            document.getElementById("margin-value-badge").textContent =
-              `${state.padding} mm`;
-            clearTimeout(marginTimer);
-            marginTimer = setTimeout(() => {
-              renderPresets();
-              syncEstimator();
-            }, 80);
-          });
-
-        // Export
-        document
-          .getElementById("btn-export")
-          .addEventListener("click", startExport);
-        document
-          .getElementById("btn-cancel-export")
-          .addEventListener("click", cancelExport);
-
-        // Cover toggle
-        document
-          .getElementById("toggle-cover")
-          .addEventListener("change", (e) => {
-            document.getElementById("cover-controls").hidden =
-              !e.target.checked;
-            e.target.setAttribute("aria-checked", String(e.target.checked));
-          });
-
-        // Cover themes
-        document
-          .getElementById("cover-themes")
-          .addEventListener("click", (e) => {
-            const btn = e.target.closest(".cover-theme-btn[data-theme]");
-            if (!btn) return;
-            document
-              .querySelectorAll(".cover-theme-btn")
-              .forEach((b) => b.setAttribute("aria-pressed", "false"));
-            btn.setAttribute("aria-pressed", "true");
-          });
-
-        // Presets
-        document
-          .getElementById("presets-row")
-          .addEventListener("click", (e) => {
-            const chip = e.target.closest(".preset-chip[data-preset-id]");
-            if (!chip) return;
-            const preset = PRESETS.find((p) => p.id === chip.dataset.presetId);
-            if (!preset) return;
-            state.sizeMode = preset.sizeMode;
-            state.compressionMode = preset.compressionMode;
-            state.padding = preset.padding;
-            state.activePresetId = preset.id;
-            syncUI();
-            renderSegmented(
-              "seg-sizes",
-              SIZE_OPTIONS,
-              state.sizeMode,
-              "sizeMode",
-            );
-            renderSegmented(
-              "seg-compression",
-              COMPRESSION_OPTIONS,
-              state.compressionMode,
-              "compression",
-            );
-          });
-
-        // Size seg
-        document.getElementById("seg-sizes").addEventListener("click", (e) => {
-          const btn = e.target.closest(".seg-btn[data-size-mode]");
-          if (!btn) return;
-          state.sizeMode = btn.dataset.sizeMode;
-          state.activePresetId = "";
-          syncUI();
-          renderSegmented(
-            "seg-sizes",
-            SIZE_OPTIONS,
-            state.sizeMode,
-            "sizeMode",
-          );
+        // More Options toggle (dynamic height)
+        document.getElementById("btn-adv-toggle").addEventListener("click", () => {
+          const body = document.getElementById("adv-body");
+          if (body.classList.contains("is-open")) closeAdv();
+          else openAdv();
         });
 
-        // Compression seg
-        document
-          .getElementById("seg-compression")
-          .addEventListener("click", (e) => {
-            const btn = e.target.closest(".seg-btn[data-compression]");
-            if (!btn) return;
-            state.compressionMode = btn.dataset.compression;
-            state.activePresetId = "";
-            syncUI();
-            renderSegmented(
-              "seg-compression",
-              COMPRESSION_OPTIONS,
-              state.compressionMode,
-              "compression",
-            );
-          });
+        // Cover Page toggle
+        document.getElementById("toggle-cover").addEventListener("change", e => {
+          const controls = document.getElementById("cover-controls");
+          controls.hidden = !e.target.checked;
+          e.target.setAttribute("aria-checked", String(e.target.checked));
+          setTimeout(recalcAdvHeight, 20);
+        });
 
-        // History list
-        document
-          .getElementById("history-list")
-          .addEventListener("click", (e) => {
-            const btn = e.target.closest(".btn-redownload[data-log-id]");
-            if (!btn) return;
-            triggerRedownload(parseInt(btn.dataset.logId, 10), btn);
-          });
+        // Cover themes
+        document.getElementById("cover-themes").addEventListener("click", e => {
+          const btn = e.target.closest(".cover-theme-btn[data-theme]");
+          if (!btn) return;
+          document.querySelectorAll(".cover-theme-btn").forEach(b => b.setAttribute("aria-pressed", "false"));
+          btn.setAttribute("aria-pressed", "true");
+        });
+
+        // Document Info toggle
+        document.getElementById("btn-docinfo-toggle").addEventListener("click", () => {
+          const body   = document.getElementById("docinfo-body");
+          const toggle = document.getElementById("btn-docinfo-toggle");
+          const chev   = toggle.querySelector(".toggle-chevron");
+          const isOpen = !body.hidden;
+          body.hidden  = isOpen;
+          toggle.setAttribute("aria-expanded", String(!isOpen));
+          if (chev) chev.style.transform = isOpen ? "" : "rotate(180deg)";
+          setTimeout(recalcAdvHeight, 20);
+        });
+
+        // Find All Frames
+        document.getElementById("btn-find-all").addEventListener("click", () => {
+          postToPlugin({ type: "FIND_ALL_FRAMES" });
+        });
+
+        // Select All / Deselect All
+        document.getElementById("btn-select-all").addEventListener("click", () => {
+          if (state.selectedIds.size === state.frames.length && state.frames.length > 0) {
+            state.selectedIds.clear();
+          } else {
+            state.orderedIds.forEach(id => state.selectedIds.add(id));
+          }
+          renderFrameList();
+          syncUI();
+        });
+
+        // Frame Padding slider
+        let marginTimer = null;
+        document.getElementById("margin-slider").addEventListener("input", e => {
+          state.padding = parseInt(e.target.value, 10);
+          state.activePresetId = "";
+          document.getElementById("margin-value-badge").textContent = `${state.padding} mm`;
+          clearTimeout(marginTimer);
+          marginTimer = setTimeout(() => { renderPresets(); syncEstimator(); savePrefs(); }, 100);
+        });
+
+        // Export + Cancel
+        document.getElementById("btn-export").addEventListener("click", startExport);
+        document.getElementById("btn-cancel-export").addEventListener("click", cancelExport);
+
+        // Escape key closes export overlay
+        document.addEventListener("keydown", e => {
+          if (e.key === "Escape" && state.exporting) cancelExport();
+        });
+
+        // Presets
+        document.getElementById("presets-row").addEventListener("click", e => {
+          const chip = e.target.closest(".preset-chip[data-preset-id]");
+          if (!chip) return;
+          const preset = PRESETS.find(p => p.id === chip.dataset.presetId);
+          if (!preset) return;
+          state.sizeMode        = preset.sizeMode;
+          state.compressionMode = preset.compressionMode;
+          state.padding         = preset.padding;
+          state.activePresetId  = preset.id;
+          syncUI();
+          renderSegmented("seg-sizes",       SIZE_OPTIONS,        state.sizeMode,        "sizeMode");
+          renderSegmented("seg-compression", COMPRESSION_OPTIONS, state.compressionMode, "compression");
+          savePrefs();
+        });
+
+        // Page Size segmented control
+        document.getElementById("seg-sizes").addEventListener("click", e => {
+          const btn = e.target.closest(".seg-btn[data-size-mode]");
+          if (!btn) return;
+          state.sizeMode       = btn.dataset.sizeMode;
+          state.activePresetId = "";
+          syncUI();
+          renderSegmented("seg-sizes", SIZE_OPTIONS, state.sizeMode, "sizeMode");
+          renderPresets();
+          savePrefs();
+        });
+
+        // Compression segmented control
+        document.getElementById("seg-compression").addEventListener("click", e => {
+          const btn = e.target.closest(".seg-btn[data-compression]");
+          if (!btn) return;
+          state.compressionMode = btn.dataset.compression;
+          state.activePresetId  = "";
+          syncUI();
+          renderSegmented("seg-compression", COMPRESSION_OPTIONS, state.compressionMode, "compression");
+          renderPresets();
+          savePrefs();
+        });
+
+        // History re-download
+        document.getElementById("history-list").addEventListener("click", e => {
+          const btn = e.target.closest(".btn-redownload[data-log-id]");
+          if (!btn) return;
+          triggerRedownload(parseInt(btn.dataset.logId, 10), btn);
+        });
 
         // Clear history
-        document
-          .getElementById("btn-clear-history")
-          .addEventListener("click", () => {
-            state.historyLogs = [];
-            postToPlugin({ type: "SAVE_HISTORY_LOGS", logs: [] });
-            try {
-              localStorage.removeItem(HISTORY_LOG_KEY);
-            } catch {}
-            showToast("Export history cleared.", "info");
-            renderHistory();
-          });
-
-        /* ── BOOT ── */
-        (function boot() {
-          renderSegmented(
-            "seg-sizes",
-            SIZE_OPTIONS,
-            state.sizeMode,
-            "sizeMode",
-          );
-          renderSegmented(
-            "seg-compression",
-            COMPRESSION_OPTIONS,
-            state.compressionMode,
-            "compression",
-          );
-          renderPresets();
+        document.getElementById("btn-clear-history").addEventListener("click", () => {
+          state.historyLogs = [];
+          postToPlugin({ type: "SAVE_HISTORY_LOGS", logs: [] });
+          showToast("Export history cleared.", "info");
           renderHistory();
+        });
+
+        /* ============================================================
+           BOOT
+           ============================================================ */
+        (function boot() {
+          renderSegmented("seg-sizes",       SIZE_OPTIONS,        state.sizeMode,        "sizeMode");
+          renderSegmented("seg-compression", COMPRESSION_OPTIONS, state.compressionMode, "compression");
+          renderPresets();
           syncUI();
           postToPlugin({ type: "GET_HISTORY_LOGS" });
+          postToPlugin({ type: "GET_PREFS" });
         })();
+
       })();
     </script>
   </body>

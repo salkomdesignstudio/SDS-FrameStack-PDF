@@ -65,8 +65,8 @@ async function initUser() {
     const user = figma.currentUser;
     send({
       type:     MSG.USER_READY,
-      name:     user?.name     || "",
-      photoUrl: user?.photoUrl || ""
+      name:     user ? user.name || "" : "",
+      photoUrl: user ? user.photoUrl || "" : ""
     });
   } catch (_) {
     send({ type: MSG.USER_READY, name: "", photoUrl: "" });

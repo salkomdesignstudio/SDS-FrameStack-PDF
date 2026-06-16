@@ -73,6 +73,59 @@ async function initUser() {
   }
 }
 
+// ── Helper to find all hyperlinks in text nodes recursively ──
+function findTextLinks(node, frame, links = []) {
+  if (node.type === "TEXT") {
+    try {
+      const segments = node.getStyledTextSegments(["hyperlink"]);
+      const hasLinks = segments.some(s => s.hyperlink && s.hyperlink.type === "URL");
+      if (hasLinks) {
+        const nodeBounds = node.absoluteBoundingBox;
+        const frameBounds = frame.absoluteBoundingBox;
+        if (nodeBounds && frameBounds) {
+          const totalLen = node.characters.length;
+          const isSingleLine = !node.characters.includes("\n") && !node.characters.includes("\r");
+
+          segments.forEach(seg => {
+            if (seg.hyperlink && seg.hyperlink.type === "URL") {
+              let relX, relY, relW, relH;
+
+              if (isSingleLine && totalLen > 0) {
+                const startPct = seg.start / totalLen;
+                const endPct = seg.end / totalLen;
+                relX = (nodeBounds.x - frameBounds.x) + (startPct * nodeBounds.width);
+                relW = (endPct - startPct) * nodeBounds.width;
+                relY = nodeBounds.y - frameBounds.y;
+                relH = nodeBounds.height;
+              } else {
+                relX = nodeBounds.x - frameBounds.x;
+                relY = nodeBounds.y - frameBounds.y;
+                relW = nodeBounds.width;
+                relH = nodeBounds.height;
+              }
+
+              links.push({
+                url: seg.hyperlink.value,
+                relX,
+                relY,
+                relW,
+                relH
+              });
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error extracting links from text node:", e);
+    }
+  } else if ("children" in node) {
+    for (const child of node.children) {
+      findTextLinks(child, frame, links);
+    }
+  }
+  return links;
+}
+
 // ── Thumbnail export (shared by selection and find-all) ──
 async function exportThumbnail(frame) {
   const bytes = await frame.exportAsync({
@@ -138,13 +191,15 @@ const handlers = {
         format:     "PNG",
         constraint: { type: "SCALE", value: 2 }
       });
+      const links = findTextLinks(node, node);
       send({
         type:        MSG.SINGLE_FRAME_READY,
         id:          node.id,
         name:        node.name,
         width:       node.width,
         height:      node.height,
-        imageBinary: uint8ToBinaryString(bytes)
+        imageBinary: uint8ToBinaryString(bytes),
+        links:       links
       });
     } catch (err) {
       send({ type: MSG.SINGLE_FRAME_FAILED, id, reason: err.message || String(err) });

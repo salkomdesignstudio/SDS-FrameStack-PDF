@@ -1604,8 +1604,13 @@
               _pdf.addPage(fmt, orientation);
             }
 
+            let scaleX, scaleY, offsetW, offsetH;
             if (sizeMode === "original") {
               _pdf.addImage(imgUrl, useJpeg ? "JPEG" : "PNG", 0, 0, pdfW, pdfH);
+              scaleX = PX_TO_MM;
+              scaleY = PX_TO_MM;
+              offsetW = 0;
+              offsetH = 0;
             } else {
               const maxW = pdfW - padding * 2;
               const maxH = pdfH - padding * 2;
@@ -1616,6 +1621,20 @@
               const rx   = padding + (maxW - dW) / 2;
               const ry   = padding + (maxH - dH) / 2;
               _pdf.addImage(imgUrl, useJpeg ? "JPEG" : "PNG", rx, ry, dW, dH);
+              scaleX = dW / msg.width;
+              scaleY = dH / msg.height;
+              offsetW = rx;
+              offsetH = ry;
+            }
+
+            if (msg.links && Array.isArray(msg.links)) {
+              msg.links.forEach(link => {
+                const pdfX = offsetW + (link.relX * scaleX);
+                const pdfY = offsetH + (link.relY * scaleY);
+                const pdfLinkW = link.relW * scaleX;
+                const pdfLinkH = link.relH * scaleY;
+                _pdf.link(pdfX, pdfY, pdfLinkW, pdfLinkH, { url: link.url });
+              });
             }
 
             const nextIdx = idx + 1;

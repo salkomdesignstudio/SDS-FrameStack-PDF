@@ -228,7 +228,7 @@
         display: none; flex-direction: column;
       }
       .tab-panel.is-active { display: flex; }
-      #panel-select { overflow: hidden; }
+      #panel-select { overflow-y: auto; }
 
       /* =============================================================
          SECTION LABEL
@@ -272,7 +272,7 @@
       .frames-area {
         flex: 1; overflow-y: auto; overflow-x: hidden;
         padding: 0 14px 10px;
-        display: flex; flex-direction: column; gap: 6px; min-height: 0;
+        display: flex; flex-direction: column; gap: 6px; min-height: 120px; flex-shrink: 0;
       }
 
       /* =============================================================
@@ -345,14 +345,24 @@
          ============================================================= */
       .adv-toggle {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 14px; cursor: pointer;
-        border-top: 1px solid var(--border);
-        font-size: 11px; font-weight: 600; color: var(--muted);
+        padding: 10px 14px; cursor: pointer;
+        border-top: 1px solid var(--brand-border);
+        font-size: 11px; font-weight: 600; color: var(--brand);
         transition: color 0.15s, background 0.15s;
-        flex-shrink: 0; background: var(--surface);
+        flex-shrink: 0; background: var(--brand-xlight);
       }
-      .adv-toggle:hover { color: var(--ink); background: var(--surface2); }
+      .adv-toggle:hover { color: var(--brand-h); background: var(--brand-light); }
       .adv-toggle i.toggle-chevron { font-size: 14px; transition: transform 0.25s var(--ease); }
+      .adv-badge {
+        background: var(--brand); color: #fff; font-size: 8.5px; font-weight: 700;
+        padding: 2px 5px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+        margin-left: 4px; animation: pulse-badge 2s infinite;
+      }
+      @keyframes pulse-badge {
+        0% { box-shadow: 0 0 0 0 rgba(0, 20, 209, 0.4); }
+        70% { box-shadow: 0 0 0 4px rgba(0, 20, 209, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 20, 209, 0); }
+      }
       .adv-toggle.is-open i.toggle-chevron { transform: rotate(180deg); }
       .adv-body {
         overflow: hidden; max-height: 0;
@@ -786,6 +796,7 @@
           <span style="display:flex;align-items:center;gap:6px">
             <i class="ri-equalizer-2-line" style="font-size:13px"></i>
             More Options
+            <span class="adv-badge">New</span>
           </span>
           <i class="ri-arrow-down-s-line toggle-chevron"></i>
         </button>
@@ -1694,7 +1705,7 @@
             _pdf.save(saveName);
             logExportEntry(saveName, state.exportTotalBytes, totalPages, base64Pdf);
             cancelExport();
-            showToast(`PDF saved — ${saveName} (${formatBytes(state.exportTotalBytes)})`, "success");
+            showToast(`PDF generated — ${saveName} (${formatBytes(state.exportTotalBytes)})`, "success");
             setTimeout(() => switchTab("history"), 700);
           } catch (err) {
             showToast(`Save failed: ${err.message}`, "error");

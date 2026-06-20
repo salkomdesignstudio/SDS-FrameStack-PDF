@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FrameStack PDF</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/400.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/500.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/600.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/700.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 
     <script>
@@ -24,68 +23,159 @@
 
     <style>
       /* =============================================================
-         DESIGN TOKENS
+         GEIST DESIGN SYSTEM — LIGHT THEME TOKENS
          ============================================================= */
       :root {
-        --brand:        #0014d1;
-        --brand-h:      #000fa8;
-        --brand-xlight: rgba(0, 20, 209, 0.06);
-        --brand-light:  rgba(0, 20, 209, 0.10);
-        --brand-border: rgba(0, 20, 209, 0.18);
+        /* ── Geist color primitives ── */
+        --geist-primary:     #171717;
+        --geist-secondary:   #4d4d4d;
+        --geist-tertiary:    #006bff;
+        --geist-bg-100:      #ffffff;
+        --geist-bg-200:      #fafafa;
 
-        --bg:       #f7f8fc;
-        --surface:  #ffffff;
-        --surface2: #f1f3f9;
-        --border:   #e4e7ef;
+        --gray-100: #f2f2f2;
+        --gray-200: #ebebeb;
+        --gray-300: #e6e6e6;
+        --gray-400: #eaeaea;
+        --gray-500: #c9c9c9;
+        --gray-600: #a8a8a8;
+        --gray-700: #8f8f8f;
+        --gray-800: #7d7d7d;
+        --gray-900: #4d4d4d;
+        --gray-1000: #171717;
 
-        --ink:    #0b0f1a;
-        --body:   #4a5568;
-        --muted:  #667085;
-        --subtle: #94a3b8;
-        --faint:  #cbd5e1;
+        --gray-alpha-100: rgba(0,0,0,0.05);
+        --gray-alpha-200: rgba(0,0,0,0.08);
+        --gray-alpha-300: rgba(0,0,0,0.10);
+        --gray-alpha-400: rgba(0,0,0,0.08);
+        --gray-alpha-500: rgba(0,0,0,0.21);
+        --gray-alpha-600: rgba(0,0,0,0.24);
+        --gray-alpha-700: rgba(0,0,0,0.44);
+        --gray-alpha-800: rgba(0,0,0,0.51);
 
-        --green:        #0d9488;
-        --green-bg:     #f0fdf9;
-        --green-border: #99f6e4;
+        --blue-100: #f0f7ff;
+        --blue-200: #e9f4ff;
+        --blue-400: #cae7ff;
+        --blue-700: #006bff;
+        --blue-800: #0059ec;
+        --blue-1000: #002359;
 
-        --red:        #dc2626;
-        --red-bg:     #fef2f2;
-        --red-border: #fca5a5;
+        --red-100: #ffeeef;
+        --red-400: #ffd7d6;
+        --red-600: #ff676d;
+        --red-700: #fc0035;
+        --red-800: #ea001d;
 
-        --sans: "Inter", system-ui, sans-serif;
+        --amber-100: #fff6de;
+        --amber-700: #ffae00;
 
+        --green-100: #ecfdec;
+        --green-400: #b9f5bc;
+        --green-700: #28a948;
+        --green-800: #279141;
+
+        /* ── Semantic aliases (brand = blue-700) ── */
+        --brand:        var(--blue-700);
+        --brand-h:      var(--blue-800);
+        --brand-xlight: var(--blue-100);
+        --brand-light:  var(--blue-200);
+        --brand-border: var(--blue-400);
+
+        /* ── Surfaces ── */
+        --bg:       var(--geist-bg-200);
+        --surface:  var(--geist-bg-100);
+        --surface2: var(--gray-100);
+        --border:   var(--gray-alpha-400);
+
+        /* ── Text ── */
+        --ink:    var(--gray-1000);
+        --body:   var(--gray-900);
+        --muted:  var(--gray-700);
+        --subtle: var(--gray-600);
+        --faint:  var(--gray-500);
+
+        /* ── Status colors ── */
+        --green:        var(--green-700);
+        --green-bg:     var(--green-100);
+        --green-border: var(--green-400);
+
+        --red:        var(--red-700);
+        --red-bg:     var(--red-100);
+        --red-border: var(--red-400);
+
+        /* ── Geist typography ── */
+        --sans: "Geist", system-ui, sans-serif;
+        --mono: "Geist Mono", monospace;
+
+        /* ── Geist radii ── */
         --r-xs: 4px;
-        --r-sm: 6px;
-        --r:    10px;
-        --r-lg: 14px;
-        --r-xl: 18px;
+        --r-sm: 6px;    /* Geist rounded.sm */
+        --r:    6px;    /* most controls */
+        --r-lg: 12px;   /* Geist rounded.md — menus, modals */
+        --r-xl: 16px;   /* Geist rounded.lg — fullscreen */
 
-        --sh-xs: 0 1px 2px  rgba(15, 23, 42, 0.04);
-        --sh-sm: 0 2px 6px  rgba(15, 23, 42, 0.06);
-        --sh-md: 0 4px 16px rgba(15, 23, 42, 0.08);
-        --sh-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+        /* ── Geist elevation shadows ── */
+        --sh-xs: 0 2px 2px rgba(0,0,0,0.04);   /* raised card */
+        --sh-sm: 0 1px 1px rgba(0,0,0,0.02),
+                 0 4px 8px -4px rgba(0,0,0,0.04),
+                 0 16px 24px -8px rgba(0,0,0,0.06);  /* popover */
+        --sh-md: 0 1px 1px rgba(0,0,0,0.02),
+                 0 8px 16px -4px rgba(0,0,0,0.04),
+                 0 24px 32px -8px rgba(0,0,0,0.06);  /* modal */
+        --sh-lg: 0 1px 1px rgba(0,0,0,0.02),
+                 0 8px 16px -4px rgba(0,0,0,0.04),
+                 0 24px 32px -8px rgba(0,0,0,0.06);
 
-        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        /* ── Geist motion ── */
+        --ease: cubic-bezier(0.175, 0.885, 0.32, 1.1);
 
         --h-header: 52px;
         --h-nav:    44px;
         --h-footer: 64px;
       }
 
+      /* ── Dark theme overrides ── */
       [data-theme="dark"] {
-        --bg:       #090d1a;
-        --surface:  #111827;
-        --surface2: #0c1220;
-        --border:   #1e2d45;
-        --ink:    #f0f4ff;
-        --body:   #c5d0e8;
-        --muted:  #8899bb;
-        --subtle: #4a6080;
-        --faint:  #1e2d45;
-        --green-bg:     rgba(13, 148, 136, 0.12);
-        --green-border: rgba(153, 246, 228, 0.20);
-        --red-bg:       rgba(220, 38, 38, 0.12);
-        --red-border:   rgba(252, 165, 165, 0.20);
+        --geist-bg-100: #0a0a0a;
+        --geist-bg-200: #111111;
+        --gray-100: #1a1a1a;
+        --gray-200: #242424;
+        --gray-300: #2e2e2e;
+        --gray-400: #282828;
+        --gray-500: #3a3a3a;
+        --gray-600: #4a4a4a;
+        --gray-700: #717171;
+        --gray-800: #878787;
+        --gray-900: #a0a0a0;
+        --gray-1000: #ededed;
+
+        --gray-alpha-100: rgba(255,255,255,0.06);
+        --gray-alpha-200: rgba(255,255,255,0.09);
+        --gray-alpha-300: rgba(255,255,255,0.12);
+        --gray-alpha-400: rgba(255,255,255,0.10);
+        --gray-alpha-500: rgba(255,255,255,0.24);
+        --gray-alpha-600: rgba(255,255,255,0.30);
+        --gray-alpha-700: rgba(255,255,255,0.48);
+
+        --blue-100: rgba(0, 107, 255, 0.10);
+        --blue-200: rgba(0, 107, 255, 0.15);
+        --blue-400: rgba(0, 107, 255, 0.25);
+
+        --red-100: rgba(252, 0, 53, 0.10);
+        --red-400: rgba(252, 0, 53, 0.20);
+
+        --green-100: rgba(40, 169, 72, 0.10);
+        --green-400: rgba(40, 169, 72, 0.25);
+
+        --bg:       var(--geist-bg-200);
+        --surface:  var(--geist-bg-100);
+        --surface2: var(--gray-100);
+        --border:   var(--gray-alpha-400);
+        --ink:      var(--gray-1000);
+        --body:     var(--gray-900);
+        --muted:    var(--gray-700);
+        --subtle:   var(--gray-600);
+        --faint:    var(--gray-500);
       }
 
       /* =============================================================

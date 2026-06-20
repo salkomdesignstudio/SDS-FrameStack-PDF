@@ -185,7 +185,7 @@
       html, body { height: 100%; overflow: hidden; }
       body {
         font-family: var(--sans);
-        font-size: 13px;
+        font-size: 13px;          /* Geist label-13 base */
         line-height: 1.5;
         background: var(--bg);
         color: var(--body);
@@ -193,7 +193,7 @@
         user-select: none;
         display: flex;
         flex-direction: column;
-        transition: background 0.2s var(--ease), color 0.2s var(--ease);
+        transition: background 150ms var(--ease), color 150ms var(--ease);
       }
       button {
         font-family: var(--sans);
@@ -203,33 +203,39 @@
         padding: 0;
         color: inherit;
       }
+      /* Geist focus ring: 2px gap + 2px blue-700 */
       button:focus-visible {
-        outline: 2px solid var(--brand);
-        outline-offset: 2px;
+        outline: none;
+        box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue-700);
         border-radius: var(--r-sm);
       }
+      /* Geist input: label-14 (14px/400/20px lh), bg-100, 1px gray-alpha-400 border, 6px radius, 0 12px padding, 40px height */
       input, select {
         font-family: var(--sans);
-        font-size: 12px;
+        font-size: 14px;          /* Geist label-14 */
+        font-weight: 400;
+        line-height: 20px;
         background: var(--surface);
         color: var(--ink);
-        border: 1px solid var(--border);
+        border: 1px solid var(--gray-alpha-400);
         border-radius: var(--r-sm);
-        padding: 7px 10px;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        padding: 0 12px;
+        height: 32px;             /* Geist input-small */
+        transition: border-color 150ms, box-shadow 150ms;
         width: 100%;
       }
+      /* Geist focus ring on inputs */
       input:focus, select:focus {
         outline: none;
-        border-color: var(--brand);
-        box-shadow: 0 0 0 3px var(--brand-xlight);
+        border-color: var(--blue-700);
+        box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue-700);
       }
       [data-theme="dark"] input,
-      [data-theme="dark"] select { background: var(--surface2); border-color: var(--border); }
+      [data-theme="dark"] select { background: var(--surface2); }
       ::-webkit-scrollbar        { width: 4px; height: 4px; }
       ::-webkit-scrollbar-track  { background: transparent; }
-      ::-webkit-scrollbar-thumb  { background: var(--faint); border-radius: 99px; }
-      ::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
+      ::-webkit-scrollbar-thumb  { background: var(--gray-300); border-radius: 9999px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--gray-500); }
 
       /* =============================================================
          HEADER
@@ -237,39 +243,41 @@
       #app-header {
         height: var(--h-header);
         background: var(--surface);
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid var(--gray-alpha-200);
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0 14px 0 12px;
         flex-shrink: 0;
         z-index: 40;
-        transition: background 0.2s, border-color 0.2s;
+        transition: background 150ms, border-color 150ms;
       }
       .header-brand { display: flex; align-items: center; gap: 9px; }
       .header-logo {
-        width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+        width: 28px; height: 28px; border-radius: var(--r-sm); flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
-        background: var(--brand); overflow: hidden;
+        background: var(--blue-700); overflow: hidden;
       }
       .header-logo svg { width: 18px; height: 18px; }
       .header-wordmark { display: flex; flex-direction: column; gap: 0; }
+      /* Geist heading-14: 14px/600/-0.28px/20px */
       .wordmark-name {
-        font-size: 12.5px; font-weight: 700; letter-spacing: -0.015em;
-        color: var(--ink); line-height: 1.1;
+        font-size: 14px; font-weight: 600; letter-spacing: -0.28px;
+        color: var(--ink); line-height: 20px;
       }
+      /* Geist label-12: 12px/400/16px */
       .wordmark-tag {
-        font-size: 9px; font-weight: 500; color: var(--subtle);
+        font-size: 11px; font-weight: 500; color: var(--subtle);
         letter-spacing: 0.04em; text-transform: uppercase; line-height: 1;
       }
       .header-actions { display: flex; align-items: center; gap: 4px; }
       .icon-btn {
         width: 30px; height: 30px; border-radius: var(--r-sm);
         display: flex; align-items: center; justify-content: center;
-        color: var(--muted); font-size: 15px;
-        transition: background 0.15s, color 0.15s;
+        color: var(--gray-700); font-size: 15px;
+        transition: background 150ms, color 150ms;
       }
-      .icon-btn:hover { background: var(--surface2); color: var(--ink); }
+      .icon-btn:hover { background: var(--gray-100); color: var(--gray-1000); }
 
       /* =============================================================
          NAV (2 tabs)
@@ -277,32 +285,33 @@
       #app-nav {
         height: var(--h-nav);
         background: var(--surface);
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid var(--gray-alpha-200);
         display: flex;
         align-items: stretch;
         padding: 0 4px;
         flex-shrink: 0;
         z-index: 35;
-        transition: background 0.2s, border-color 0.2s;
+        transition: background 150ms, border-color 150ms;
       }
+      /* Geist button-14: 14px/500/20px */
       .nav-tab {
         display: flex; align-items: center; gap: 5px;
         padding: 0 16px;
         border-bottom: 2px solid transparent;
-        cursor: pointer; color: var(--muted);
-        font-size: 12px; font-weight: 500; letter-spacing: 0.01em;
+        cursor: pointer; color: var(--gray-700);
+        font-size: 14px; font-weight: 500; letter-spacing: 0;
         white-space: nowrap; flex-shrink: 0;
-        transition: color 0.15s, border-color 0.15s, background 0.12s;
+        transition: color 150ms, border-color 150ms, background 150ms;
       }
-      .nav-tab:hover { color: var(--ink); background: var(--brand-xlight); }
-      .nav-tab.is-active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+      .nav-tab:hover { color: var(--gray-1000); background: var(--gray-alpha-100); }
+      .nav-tab.is-active { color: var(--gray-1000); border-bottom-color: var(--gray-1000); font-weight: 600; }
       .tab-badge {
         display: inline-flex; align-items: center; justify-content: center;
         min-width: 16px; height: 16px; padding: 0 4px;
-        border-radius: 99px; background: var(--brand); color: #fff;
+        border-radius: 9999px; background: var(--gray-1000); color: var(--geist-bg-100);
         font-size: 9px; font-weight: 700;
         opacity: 0; transform: scale(0.7);
-        transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+        transition: opacity 200ms var(--ease), transform 200ms var(--ease);
       }
       .tab-badge.is-visible { opacity: 1; transform: scale(1); }
 
@@ -323,9 +332,10 @@
       /* =============================================================
          SECTION LABEL
          ============================================================= */
+      /* Geist label-12: 12px/400/16px — section labels */
       .sec-label {
-        font-size: 10px; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.08em; color: var(--subtle); margin-bottom: 8px;
+        font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.08em; color: var(--gray-700); margin-bottom: 8px;
         display: flex; align-items: center; gap: 6px;
       }
       .sec-label i { font-size: 11px; }
@@ -339,22 +349,24 @@
       }
       .frames-toolbar .sec-label { margin-bottom: 0; }
       .toolbar-actions { display: flex; align-items: center; gap: 6px; }
+      /* Geist button-secondary (small): bg-100 fill, gray-alpha-400 border, 6px radius, 32px height */
       .btn-find-all {
-        font-size: 11px; font-weight: 600; color: var(--muted);
-        padding: 4px 9px; border-radius: var(--r-sm);
-        border: 1px solid var(--border); background: var(--surface2);
+        font-size: 13px; font-weight: 500; color: var(--gray-900);
+        padding: 0 10px; height: 32px; border-radius: var(--r-sm);
+        border: 1px solid var(--gray-alpha-400); background: var(--surface);
         display: flex; align-items: center; gap: 4px;
-        transition: background 0.15s, color 0.15s, border-color 0.15s;
+        transition: background 150ms, color 150ms, border-color 150ms;
       }
-      .btn-find-all i { font-size: 11px; }
-      .btn-find-all:hover { color: var(--ink); background: var(--surface); border-color: var(--subtle); }
+      .btn-find-all i { font-size: 12px; }
+      .btn-find-all:hover { color: var(--gray-1000); background: var(--gray-100); border-color: var(--gray-alpha-500); }
+      /* Geist button-primary (small): gray-1000 fill, white text, 6px radius, 32px height */
       .btn-select-all {
-        font-size: 11px; font-weight: 600; color: var(--brand);
-        padding: 4px 10px; border-radius: var(--r-sm);
-        border: 1px solid var(--brand-border); background: var(--brand-xlight);
-        transition: background 0.15s;
+        font-size: 13px; font-weight: 500; color: var(--geist-bg-100);
+        padding: 0 10px; height: 32px; border-radius: var(--r-sm);
+        border: none; background: var(--gray-1000);
+        transition: opacity 150ms;
       }
-      .btn-select-all:hover { background: var(--brand-light); }
+      .btn-select-all:hover { opacity: 0.9; }
 
       /* =============================================================
          FRAMES SCROLLABLE AREA
@@ -370,34 +382,35 @@
          ============================================================= */
       .presets-strip {
         flex-shrink: 0; padding: 10px 14px 12px;
-        border-top: 1px solid var(--border);
+        border-top: 1px solid var(--gray-alpha-200);
         background: var(--surface);
-        transition: background 0.2s, border-color 0.2s;
+        transition: background 150ms, border-color 150ms;
       }
       .presets-strip .sec-label { margin-bottom: 7px; }
-      .preset-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+      .preset-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
       .preset-chip {
         display: flex; flex-direction: column; align-items: center;
-        justify-content: center; gap: 3px; padding: 9px 6px;
-        border-radius: var(--r); border: 1.5px solid var(--border);
-        background: var(--surface2); text-align: center; cursor: pointer; line-height: 1.2;
-        transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+        justify-content: center; gap: 3px; padding: 8px 6px;
+        border-radius: var(--r-sm); border: 1px solid var(--gray-alpha-300);
+        background: var(--surface); text-align: center; cursor: pointer; line-height: 1.2;
+        box-shadow: var(--sh-xs);
+        transition: border-color 150ms, background 150ms, box-shadow 150ms;
       }
-      .preset-chip i { font-size: 15px; color: var(--muted); transition: color 0.15s; flex-shrink: 0; }
+      /* Geist label-12: 12px/400/16px */
+      .preset-chip i { font-size: 14px; color: var(--gray-700); transition: color 150ms; flex-shrink: 0; }
       .preset-name {
-        font-size: 10px; font-weight: 600; color: var(--body);
-        letter-spacing: 0.01em; transition: color 0.15s;
+        font-size: 11px; font-weight: 600; color: var(--gray-900);
+        letter-spacing: -0.1px; transition: color 150ms;
       }
-      .preset-sub { font-size: 10px; font-weight: 400; color: var(--subtle); line-height: 1; transition: color 0.15s; }
-      .preset-chip:hover { border-color: var(--brand-border); background: var(--brand-xlight); }
-      .preset-chip:hover i, .preset-chip:hover .preset-name { color: var(--brand); }
+      .preset-sub { font-size: 10px; font-weight: 400; color: var(--gray-700); line-height: 1; transition: color 150ms; }
+      .preset-chip:hover { border-color: var(--gray-alpha-500); background: var(--gray-100); }
       .preset-chip[aria-pressed="true"] {
-        border-color: var(--brand); background: var(--brand-xlight);
-        box-shadow: 0 0 0 2.5px var(--brand-xlight);
+        border-color: var(--blue-700); background: var(--blue-100);
+        box-shadow: 0 0 0 1px var(--blue-700), var(--sh-xs);
       }
       .preset-chip[aria-pressed="true"] i,
-      .preset-chip[aria-pressed="true"] .preset-name { color: var(--brand); }
-      .preset-chip[aria-pressed="true"] .preset-sub { color: rgba(0, 20, 209, 0.55); }
+      .preset-chip[aria-pressed="true"] .preset-name { color: var(--blue-700); }
+      .preset-chip[aria-pressed="true"] .preset-sub { color: var(--blue-800); opacity: 0.7; }
 
       /* =============================================================
          SETTINGS STRIP
@@ -405,250 +418,266 @@
       .settings-strip {
         flex-shrink: 0; padding: 10px 14px 8px;
         display: flex; flex-direction: column; gap: 10px;
-        border-top: 1px solid var(--border); background: var(--surface);
-        transition: background 0.2s, border-color 0.2s;
+        border-top: 1px solid var(--gray-alpha-200); background: var(--surface);
+        transition: background 150ms, border-color 150ms;
       }
       .settings-row { display: flex; flex-direction: column; }
       .settings-row .sec-label { margin-bottom: 6px; }
 
       /* =============================================================
-         SEGMENTED CONTROLS
+         SEGMENTED CONTROLS — Geist style
          ============================================================= */
       .seg-group {
-        display: flex; background: var(--surface2);
+        display: flex; background: var(--gray-100);
         border-radius: var(--r-sm); padding: 2px;
+        border: 1px solid var(--gray-alpha-200);
       }
+      /* Geist button-12: 12px/500/16px */
       .seg-btn {
-        flex: 1; padding: 5px 6px; font-size: 11px; font-weight: 500;
-        color: var(--muted); border-radius: calc(var(--r-sm) - 1px);
-        transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+        flex: 1; padding: 4px 6px; font-size: 12px; font-weight: 500;
+        color: var(--gray-700); border-radius: calc(var(--r-sm) - 2px);
+        transition: background 150ms, color 150ms, box-shadow 150ms;
         white-space: nowrap; text-align: center;
       }
-      .seg-btn:hover { color: var(--ink); }
+      .seg-btn:hover { color: var(--gray-1000); }
       .seg-btn[aria-pressed="true"] {
-        background: var(--surface); color: var(--ink); font-weight: 600;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 0 0 0.5px rgba(15, 23, 42, 0.06);
+        background: var(--surface); color: var(--gray-1000); font-weight: 600;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 0 0 1px var(--gray-alpha-200);
       }
 
       /* =============================================================
-         MORE OPTIONS COLLAPSE
+         MORE OPTIONS COLLAPSE — Geist style
          ============================================================= */
       .adv-toggle {
         display: flex; align-items: center; justify-content: space-between;
         padding: 10px 14px; cursor: pointer;
-        border-top: 1px solid var(--brand-border);
-        font-size: 11px; font-weight: 600; color: var(--brand);
-        transition: color 0.15s, background 0.15s;
-        flex-shrink: 0; background: var(--brand-xlight);
+        border-top: 1px solid var(--gray-alpha-200);
+        font-size: 13px; font-weight: 500; color: var(--gray-900);
+        transition: color 150ms, background 150ms;
+        flex-shrink: 0; background: var(--surface);
       }
-      .adv-toggle:hover { color: var(--brand-h); background: var(--brand-light); }
-      .adv-toggle i.toggle-chevron { font-size: 14px; transition: transform 0.25s var(--ease); }
+      .adv-toggle:hover { background: var(--gray-100); color: var(--gray-1000); }
+      .adv-toggle i.toggle-chevron { font-size: 14px; transition: transform 200ms var(--ease); }
+      /* Geist-style badge: small pill */
       .adv-badge {
-        background: var(--brand); color: #fff; font-size: 8.5px; font-weight: 700;
-        padding: 2px 5px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+        background: var(--blue-700); color: #fff; font-size: 9px; font-weight: 600;
+        padding: 2px 6px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em;
         margin-left: 4px; animation: pulse-badge 2s infinite;
       }
       @keyframes pulse-badge {
-        0% { box-shadow: 0 0 0 0 rgba(0, 20, 209, 0.4); }
-        70% { box-shadow: 0 0 0 4px rgba(0, 20, 209, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(0, 20, 209, 0); }
+        0%   { box-shadow: 0 0 0 0 rgba(0, 107, 255, 0.35); }
+        70%  { box-shadow: 0 0 0 4px rgba(0, 107, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 107, 255, 0); }
       }
       .adv-toggle.is-open i.toggle-chevron { transform: rotate(180deg); }
       .adv-body {
         overflow: hidden; max-height: 0;
-        transition: max-height 0.35s var(--ease);
+        transition: max-height 300ms var(--ease);
         display: flex; flex-direction: column; flex-shrink: 0;
       }
       .adv-inner {
         padding: 12px 14px 14px;
         display: flex; flex-direction: column; gap: 10px;
-        border-top: 1px solid var(--border); background: var(--surface);
+        border-top: 1px solid var(--gray-alpha-200); background: var(--surface);
       }
 
-      /* SLIDER */
+      /* SLIDER — Geist-informed */
       .slider-wrap { display: flex; align-items: center; gap: 8px; }
+      /* Geist label-12 pill badge */
       .margin-badge {
-        font-size: 10px; font-weight: 700; color: var(--muted);
-        background: var(--surface2); border: 1px solid var(--border);
-        border-radius: 99px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0;
+        font-size: 11px; font-weight: 600; color: var(--gray-900);
+        background: var(--gray-100); border: 1px solid var(--gray-alpha-300);
+        border-radius: 9999px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0;
       }
       input[type="range"] {
-        -webkit-appearance: none; appearance: none; height: 3px; border-radius: 99px;
-        background: var(--faint); cursor: pointer; border: none; padding: 0;
-        transition: opacity 0.15s;
+        -webkit-appearance: none; appearance: none; height: 3px; border-radius: 9999px;
+        background: var(--gray-300); cursor: pointer; border: none; padding: 0;
+        transition: opacity 150ms;
+        height: auto !important;
       }
       input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
-        background: var(--brand); cursor: pointer; box-shadow: 0 1px 4px rgba(0, 20, 209, 0.3);
+        background: var(--gray-1000); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
       }
       input[type="range"]:disabled { opacity: 0.35; cursor: not-allowed; }
-      .adv-note { font-size: 10px; color: var(--subtle); margin-top: 2px; }
+      /* Geist label-12 */
+      .adv-note { font-size: 12px; color: var(--gray-700); margin-top: 2px; }
 
-      /* ADV SUB-SECTIONS (cover page, doc info) */
+      /* ADV SUB-SECTIONS (cover page, doc info) — Geist style */
       .adv-sub-section {
-        border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden;
+        border: 1px solid var(--gray-alpha-200); border-radius: var(--r-sm); overflow: hidden;
       }
       .adv-sub-head {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 10px; min-height: 38px; background: var(--surface2);
+        padding: 8px 10px; min-height: 38px; background: var(--gray-100);
       }
       button.adv-sub-head {
         width: 100%; cursor: pointer; text-align: left;
-        transition: background 0.15s;
+        transition: background 150ms;
       }
-      button.adv-sub-head:hover { background: var(--surface); }
+      button.adv-sub-head:hover { background: var(--gray-200); }
+      /* Geist label-13: 13px/400/16px */
       .adv-sub-title {
-        font-size: 11px; font-weight: 600; color: var(--ink);
+        font-size: 13px; font-weight: 600; color: var(--gray-1000);
         display: flex; align-items: center; gap: 6px;
       }
-      .adv-sub-title i { font-size: 13px; color: var(--muted); }
+      .adv-sub-title i { font-size: 13px; color: var(--gray-700); }
       .adv-sub-content {
-        padding: 10px; border-top: 1px solid var(--border);
+        padding: 10px; border-top: 1px solid var(--gray-alpha-200);
         display: flex; flex-direction: column; gap: 8px;
         background: var(--surface);
       }
 
-      /* EST SIZE BAR */
+      /* EST SIZE BAR — Geist style */
       .est-bar {
-        background: var(--surface2); border: 1px solid var(--border);
+        background: var(--gray-100); border: 1px solid var(--gray-alpha-200);
         border-radius: var(--r-sm); padding: 7px 12px;
         display: flex; align-items: center; justify-content: space-between; gap: 8px;
       }
+      /* Geist label-12 */
       .est-label {
-        font-size: 10px; color: var(--muted); font-weight: 500;
+        font-size: 12px; color: var(--gray-700); font-weight: 500;
         display: flex; align-items: center; gap: 5px;
       }
-      .est-label i { font-size: 11px; }
-      .est-value { font-size: 10px; font-weight: 700; color: var(--ink); }
+      .est-label i { font-size: 12px; }
+      .est-value { font-size: 12px; font-weight: 600; color: var(--gray-1000); }
+      /* Geist green status badge */
       .badge-green {
-        font-size: 10px; font-weight: 700; background: var(--green-bg); color: var(--green);
-        border: 1px solid var(--green-border); border-radius: 99px; padding: 2px 7px;
+        font-size: 11px; font-weight: 600; background: var(--green-100); color: var(--green-700);
+        border: 1px solid var(--green-400); border-radius: 9999px; padding: 2px 8px;
       }
       .badge-neutral {
-        font-size: 10px; font-weight: 700; background: var(--surface2); color: var(--muted);
-        border: 1px solid var(--border); border-radius: 99px; padding: 2px 7px;
+        font-size: 11px; font-weight: 500; background: var(--gray-100); color: var(--gray-700);
+        border: 1px solid var(--gray-alpha-300); border-radius: 9999px; padding: 2px 8px;
       }
 
-      /* COVER THEMES */
+      /* COVER THEMES — Geist style */
       .cover-themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
       .cover-theme-btn {
         padding: 7px 4px 6px; border-radius: var(--r-sm);
-        border: 1.5px solid var(--border); background: var(--surface);
-        font-size: 10px; font-weight: 600; color: var(--body); text-align: center;
+        border: 1px solid var(--gray-alpha-300); background: var(--surface);
+        font-size: 11px; font-weight: 500; color: var(--gray-900); text-align: center;
         cursor: pointer; display: flex; flex-direction: column; gap: 5px; align-items: center;
-        transition: border-color 0.15s, background 0.15s, color 0.15s;
+        transition: border-color 150ms, background 150ms, color 150ms;
+        box-shadow: var(--sh-xs);
       }
-      .cover-theme-btn .theme-preview { width: 100%; height: 20px; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
-      .cover-theme-btn:hover { border-color: var(--brand-border); }
-      .cover-theme-btn[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-xlight); color: var(--brand); }
+      .cover-theme-btn .theme-preview { width: 100%; height: 20px; border-radius: var(--r-xs); overflow: hidden; flex-shrink: 0; }
+      .cover-theme-btn:hover { border-color: var(--gray-alpha-500); background: var(--gray-100); }
+      .cover-theme-btn[aria-pressed="true"] { border-color: var(--blue-700); background: var(--blue-100); color: var(--blue-700); box-shadow: 0 0 0 1px var(--blue-700), var(--sh-xs); }
 
-      /* FIELDS */
+      /* FIELDS — Geist label-12 */
       .field-row { display: flex; flex-direction: column; gap: 4px; }
-      .field-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+      .field-label { font-size: 11px; font-weight: 600; color: var(--gray-700); letter-spacing: 0.02em; }
       .field-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-      /* TOGGLE */
+      /* TOGGLE — Geist style */
       .toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
       .toggle { position: relative; width: 30px; height: 17px; flex-shrink: 0; }
       .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
       .toggle-track {
-        position: absolute; inset: 0; border-radius: 99px;
-        background: var(--faint); transition: background 0.2s var(--ease); cursor: pointer;
+        position: absolute; inset: 0; border-radius: 9999px;
+        background: var(--gray-400); transition: background 150ms var(--ease); cursor: pointer;
       }
       .toggle-thumb {
         position: absolute; top: 2.5px; left: 2.5px;
         width: 12px; height: 12px; border-radius: 50%;
-        background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        transition: transform 0.2s var(--ease); pointer-events: none;
+        background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+        transition: transform 150ms var(--ease); pointer-events: none;
       }
-      .toggle input:checked + .toggle-track { background: var(--brand); }
+      .toggle input:checked + .toggle-track { background: var(--gray-1000); }
       .toggle input:checked ~ .toggle-thumb { transform: translateX(13px); }
 
       /* =============================================================
-         FRAME CARDS
+         FRAME CARDS — Geist style
          ============================================================= */
       #frame-list { display: flex; flex-direction: column; gap: 6px; }
       .frame-card {
-        border: 1.5px solid var(--border); border-radius: var(--r);
+        border: 1px solid var(--gray-alpha-300); border-radius: var(--r-sm);
         background: var(--surface); overflow: hidden;
-        transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; flex-shrink: 0;
+        box-shadow: var(--sh-xs);
+        transition: border-color 150ms, box-shadow 150ms; cursor: pointer; flex-shrink: 0;
       }
-      .frame-card:hover { border-color: var(--brand-border); box-shadow: var(--sh-sm); }
+      .frame-card:hover { border-color: var(--gray-alpha-500); box-shadow: var(--sh-sm); }
       .frame-card.is-selected {
-        border-color: var(--brand);
-        box-shadow: 0 0 0 2.5px var(--brand-xlight), var(--sh-xs);
+        border-color: var(--blue-700);
+        box-shadow: 0 0 0 1px var(--blue-700), var(--sh-xs);
       }
       .frame-card-main { display: flex; align-items: stretch; min-height: 60px; }
       .frame-thumb-col {
         width: 64px; height: 60px; flex-shrink: 0;
-        background: var(--surface2); display: flex;
+        background: var(--gray-100); display: flex;
         align-items: center; justify-content: center;
-        overflow: hidden; border-right: 1px solid var(--border);
+        overflow: hidden; border-right: 1px solid var(--gray-alpha-200);
       }
       .frame-thumb { width: 100%; height: 100%; object-fit: contain; display: block; }
       .frame-thumb-placeholder {
         display: flex; align-items: center; justify-content: center;
-        color: var(--faint); font-size: 20px; width: 100%; height: 100%;
+        color: var(--gray-400); font-size: 20px; width: 100%; height: 100%;
       }
       .thumb-loading-inner {
         width: 100%; height: 100%;
-        background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+        background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%);
         background-size: 200% 100%; animation: shimmer 1.4s ease infinite;
       }
       .frame-info-col {
         flex: 1; padding: 9px 10px;
         display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0;
       }
+      /* Geist label-13: 13px/400/16px */
       .frame-name {
-        font-size: 12px; font-weight: 600; color: var(--ink);
+        font-size: 13px; font-weight: 600; color: var(--gray-1000);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        letter-spacing: -0.1px;
       }
+      /* Geist label-12: 12px/400/16px */
       .frame-dims {
-        font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 5px;
+        font-size: 12px; color: var(--gray-700); display: flex; align-items: center; gap: 5px;
       }
-      .frame-dims-dot { width: 2px; height: 2px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+      .frame-dims-dot { width: 2px; height: 2px; border-radius: 50%; background: var(--gray-500); flex-shrink: 0; }
       .frame-actions-col {
         display: flex; align-items: center; padding: 0 8px; gap: 4px; flex-shrink: 0;
       }
       .frame-check-btn {
-        width: 20px; height: 20px; border-radius: 5px;
-        border: 1.5px solid var(--border);
+        width: 20px; height: 20px; border-radius: var(--r-xs);
+        border: 1px solid var(--gray-alpha-400);
         display: flex; align-items: center; justify-content: center;
         background: var(--surface);
-        transition: border-color 0.15s, background 0.15s;
+        transition: border-color 150ms, background 150ms;
         font-size: 11px; color: transparent; flex-shrink: 0; cursor: pointer;
       }
-      .frame-card.is-selected .frame-check-btn { background: var(--brand); border-color: var(--brand); color: #fff; }
+      .frame-card.is-selected .frame-check-btn { background: var(--blue-700); border-color: var(--blue-700); color: #fff; }
       .drag-handle {
         width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
-        color: var(--subtle); font-size: 14px; cursor: grab; flex-shrink: 0;
+        color: var(--gray-600); font-size: 14px; cursor: grab; flex-shrink: 0;
       }
-      .drag-handle:hover { color: var(--muted); }
+      .drag-handle:hover { color: var(--gray-800); }
       .frame-card.is-dragging { opacity: 0.4; box-shadow: none; }
-      .frame-card.drag-over { border-color: var(--brand); background: var(--brand-xlight); }
+      .frame-card.drag-over { border-color: var(--blue-700); background: var(--blue-100); }
       .frame-badge-order {
         min-width: 17px; height: 17px; padding: 0 4px;
-        border-radius: 99px; background: var(--brand); color: #fff;
+        border-radius: 9999px; background: var(--gray-1000); color: var(--geist-bg-100);
         font-size: 10px; font-weight: 700;
         display: flex; align-items: center; justify-content: center; flex-shrink: 0;
       }
 
       /* =============================================================
-         EMPTY / STATE VIEWS
+         EMPTY / STATE VIEWS — Geist style
          ============================================================= */
       .state-center {
         flex: 1; display: flex; flex-direction: column;
         align-items: center; justify-content: center;
         gap: 10px; text-align: center;
-        padding: 32px 20px; color: var(--subtle); min-height: 100px;
+        padding: 32px 20px; color: var(--gray-700); min-height: 100px;
       }
-      .state-icon { font-size: 28px; color: var(--faint); }
-      .state-icon.branded { color: var(--brand); opacity: 0.55; }
-      .state-title { font-size: 13px; font-weight: 600; color: var(--muted); }
-      .state-desc { font-size: 11.5px; color: var(--subtle); line-height: 1.55; max-width: 220px; }
+      .state-icon { font-size: 28px; color: var(--gray-400); }
+      .state-icon.branded { color: var(--blue-700); opacity: 0.55; }
+      /* Geist label-13 */
+      .state-title { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+      /* Geist copy-13 */
+      .state-desc { font-size: 13px; color: var(--gray-600); line-height: 18px; max-width: 220px; }
       .frame-skeleton {
-        height: 60px; border-radius: var(--r); flex-shrink: 0;
-        background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+        height: 60px; border-radius: var(--r-sm); flex-shrink: 0;
+        background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%);
         background-size: 200% 100%; animation: shimmer 1.4s ease infinite;
       }
       @keyframes shimmer {
@@ -657,110 +686,121 @@
       }
 
       /* =============================================================
-         HISTORY PANEL
+         HISTORY PANEL — Geist style
          ============================================================= */
       .panel-inner { padding: 14px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
       .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
       .history-entry {
         display: flex; align-items: center; gap: 10px;
         padding: 10px 12px; background: var(--surface);
-        border: 1px solid var(--border); border-radius: var(--r);
+        border: 1px solid var(--gray-alpha-200); border-radius: var(--r-sm);
+        box-shadow: var(--sh-xs);
       }
       .history-icon {
         width: 32px; height: 32px; border-radius: var(--r-sm);
-        background: var(--brand-xlight); display: flex; align-items: center;
-        justify-content: center; color: var(--brand); font-size: 15px; flex-shrink: 0;
+        background: var(--gray-100); display: flex; align-items: center;
+        justify-content: center; color: var(--gray-900); font-size: 15px; flex-shrink: 0;
+        border: 1px solid var(--gray-alpha-200);
       }
       .history-info { flex: 1; min-width: 0; }
-      .history-name { font-size: 11.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .history-meta { font-size: 10px; color: var(--muted); }
-      .history-preset { font-size: 10px; color: var(--subtle); }
+      /* Geist label-13 */
+      .history-name { font-size: 13px; font-weight: 600; color: var(--gray-1000); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.1px; }
+      /* Geist label-12 */
+      .history-meta { font-size: 12px; color: var(--gray-700); }
+      .history-preset { font-size: 12px; color: var(--gray-600); }
+      /* Geist button-secondary (small) */
       .btn-redownload {
         width: 28px; height: 28px; border-radius: var(--r-sm);
-        background: var(--surface2); border: 1px solid var(--border);
+        background: var(--surface); border: 1px solid var(--gray-alpha-400);
         display: flex; align-items: center; justify-content: center;
-        color: var(--muted); font-size: 14px; flex-shrink: 0;
-        transition: background 0.15s, color 0.15s, border-color 0.15s;
+        color: var(--gray-700); font-size: 14px; flex-shrink: 0;
+        transition: background 150ms, color 150ms, border-color 150ms;
       }
-      .btn-redownload:hover { background: var(--brand-xlight); color: var(--brand); border-color: var(--brand-border); }
+      .btn-redownload:hover { background: var(--gray-100); color: var(--gray-1000); border-color: var(--gray-alpha-500); }
 
       /* =============================================================
-         FOOTER
+         FOOTER — Geist style
          ============================================================= */
       #app-footer {
         height: var(--h-footer);
-        background: var(--surface); border-top: 1px solid var(--border);
+        background: var(--surface); border-top: 1px solid var(--gray-alpha-200);
         display: flex; align-items: center; justify-content: space-between;
         padding: 0 14px; flex-shrink: 0; z-index: 30;
-        transition: background 0.2s, border-color 0.2s;
+        transition: background 150ms, border-color 150ms;
       }
       .footer-left { display: flex; flex-direction: column; gap: 1px; }
-      .footer-eyebrow { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--subtle); }
-      .footer-count { font-size: 13px; font-weight: 700; color: var(--ink); }
+      /* Geist label-12 uppercase */
+      .footer-eyebrow { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray-600); }
+      /* Geist heading-14 */
+      .footer-count { font-size: 14px; font-weight: 600; color: var(--gray-1000); letter-spacing: -0.28px; }
+      /* Geist button-primary (large): gray-1000 fill, white text, 6px radius, 40px height, button-14 */
       .btn-export {
         display: flex; align-items: center; gap: 7px;
-        padding: 0 18px; height: 38px; border-radius: var(--r);
-        background: var(--brand); color: #fff;
-        font-size: 12.5px; font-weight: 700; letter-spacing: -0.01em;
-        transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
-        box-shadow: 0 1px 3px rgba(0,20,209,0.25), 0 4px 12px rgba(0,20,209,0.20);
+        padding: 0 16px; height: 40px; border-radius: var(--r-sm);
+        background: var(--gray-1000); color: var(--geist-bg-100);
+        font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+        transition: opacity 150ms;
         white-space: nowrap;
       }
-      .btn-export:hover {
-        background: var(--brand-h);
-        box-shadow: 0 2px 6px rgba(0,20,209,0.30), 0 6px 18px rgba(0,20,209,0.25);
-        transform: translateY(-1px);
-      }
-      .btn-export:active { transform: translateY(0); box-shadow: 0 1px 3px rgba(0,20,209,0.2); }
-      .btn-export:disabled { background: var(--faint); color: var(--subtle); box-shadow: none; transform: none; cursor: not-allowed; }
+      .btn-export:hover { opacity: 0.88; }
+      .btn-export:active { opacity: 0.80; }
+      /* Geist disabled: gray-100 fill, gray-700 text */
+      .btn-export:disabled { background: var(--gray-100); color: var(--gray-700); cursor: not-allowed; opacity: 1; }
       .btn-export i { font-size: 15px; }
 
       /* =============================================================
-         EXPORT OVERLAY
+         EXPORT OVERLAY — Geist modal elevation
          ============================================================= */
       #export-overlay {
         position: absolute; inset: 0;
-        background: rgba(7,11,26,0.72); backdrop-filter: blur(6px);
+        background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
         display: flex; align-items: center; justify-content: center;
         opacity: 0; pointer-events: none; z-index: 100;
-        transition: opacity 0.25s var(--ease);
+        transition: opacity 300ms var(--ease);
       }
       #export-overlay.is-active { opacity: 1; pointer-events: auto; }
+      /* Geist modal: 16px radius, modal shadow */
       .export-card {
         background: var(--surface); border-radius: var(--r-xl);
-        padding: 28px 24px 22px; width: 268px; box-shadow: var(--sh-lg);
+        border: 1px solid var(--gray-alpha-200);
+        padding: 28px 24px 22px; width: 268px; box-shadow: var(--sh-md);
         display: flex; flex-direction: column; align-items: center; gap: 14px;
       }
       .export-ring { width: 60px; height: 60px; position: relative; }
       .export-ring svg { width: 60px; height: 60px; transform: rotate(-90deg); }
-      .export-ring-track { fill: none; stroke: var(--surface2); stroke-width: 5; }
+      .export-ring-track { fill: none; stroke: var(--gray-200); stroke-width: 5; }
       .export-ring-fill {
-        fill: none; stroke: var(--brand); stroke-width: 5; stroke-linecap: round;
-        transition: stroke-dashoffset 0.4s var(--ease);
+        fill: none; stroke: var(--gray-1000); stroke-width: 5; stroke-linecap: round;
+        transition: stroke-dashoffset 300ms var(--ease);
       }
       .export-ring-pct {
         position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-        font-size: 13px; font-weight: 800; color: var(--brand);
+        font-size: 13px; font-weight: 700; color: var(--gray-1000);
       }
-      .export-title { font-size: 14px; font-weight: 800; color: var(--ink); text-align: center; }
-      .export-status { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.4; }
-      .export-stage { font-size: 10px; font-weight: 600; letter-spacing: 0.03em; color: var(--subtle); text-align: center; min-height: 14px; }
-      .export-progress-bar { width: 100%; height: 4px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
-      .export-progress-fill { height: 100%; background: var(--brand); border-radius: 99px; width: 0%; transition: width 0.4s var(--ease); }
+      /* Geist heading-14 */
+      .export-title { font-size: 14px; font-weight: 600; color: var(--gray-1000); text-align: center; letter-spacing: -0.28px; }
+      /* Geist copy-13 */
+      .export-status { font-size: 13px; color: var(--gray-700); text-align: center; line-height: 18px; }
+      /* Geist label-12 */
+      .export-stage { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--gray-600); text-align: center; min-height: 16px; }
+      .export-progress-bar { width: 100%; height: 3px; background: var(--gray-200); border-radius: 9999px; overflow: hidden; }
+      .export-progress-fill { height: 100%; background: var(--gray-1000); border-radius: 9999px; width: 0%; transition: width 300ms var(--ease); }
+      /* Geist button-secondary (small) */
       .btn-cancel {
-        font-size: 11px; font-weight: 600; color: var(--muted);
-        padding: 6px 14px; border-radius: var(--r-sm);
-        border: 1px solid var(--border); background: var(--surface2);
-        transition: color 0.15s, background 0.15s, border-color 0.15s;
+        font-size: 13px; font-weight: 500; color: var(--gray-700);
+        padding: 0 14px; height: 32px; border-radius: var(--r-sm);
+        border: 1px solid var(--gray-alpha-400); background: var(--surface);
+        transition: color 150ms, background 150ms, border-color 150ms;
+        display: flex; align-items: center;
       }
-      .btn-cancel:hover { color: var(--red); border-color: var(--red-border); background: var(--red-bg); }
+      .btn-cancel:hover { color: var(--red-700); border-color: var(--red-400); background: var(--red-100); }
 
       /* =============================================================
-         SPINNER / TOAST / MISC
+         SPINNER / TOAST / MISC — Geist style
          ============================================================= */
       .spinner {
         width: 18px; height: 18px; border-radius: 50%;
-        border: 2px solid var(--brand-xlight); border-top-color: var(--brand);
+        border: 2px solid var(--gray-200); border-top-color: var(--gray-1000);
         animation: spin 0.7s linear infinite;
       }
       @keyframes spin { to { transform: rotate(360deg); } }
@@ -770,26 +810,31 @@
         z-index: 200; display: flex; flex-direction: column;
         align-items: center; gap: 6px; pointer-events: none; width: 90%;
       }
+      /* Geist toast: gray-1000 bg, white text, 6px radius (popover shadow), label-13 */
       .toast {
         display: flex; align-items: center; gap: 8px;
-        padding: 9px 12px; border-radius: var(--r);
-        background: var(--ink); color: #fff;
-        font-size: 11.5px; font-weight: 500; box-shadow: var(--sh-lg);
+        padding: 9px 12px; border-radius: var(--r-sm);
+        background: var(--gray-1000); color: var(--geist-bg-100);
+        font-size: 13px; font-weight: 400; box-shadow: var(--sh-sm);
         max-width: 310px; width: 100%;
-        animation: toastIn 0.25s var(--ease) forwards; pointer-events: auto;
+        animation: toastIn 200ms var(--ease) forwards; pointer-events: auto;
+        border: 1px solid rgba(255,255,255,0.08);
       }
-      .toast.is-leaving { animation: toastOut 0.2s ease forwards; }
-      .toast-success { background: #0b3d2e; color: #6ee7b7; }
-      .toast-error   { background: #3d0b0b; color: #fca5a5; }
+      .toast.is-leaving { animation: toastOut 150ms ease forwards; }
+      /* Geist success: green-100 bg, green-700 text */
+      .toast-success { background: var(--green-100); color: var(--green-800); border-color: var(--green-400); }
+      /* Geist error: red-100 bg, red-800 text */
+      .toast-error   { background: var(--red-100); color: var(--red-800); border-color: var(--red-400); }
       .toast i       { font-size: 14px; flex-shrink: 0; }
-      .toast-close { margin-left: auto; padding: 2px; color: inherit; opacity: 0.6; transition: opacity 0.15s; flex-shrink: 0; font-size: 14px; }
+      .toast-close { margin-left: auto; padding: 2px; color: inherit; opacity: 0.6; transition: opacity 150ms; flex-shrink: 0; font-size: 14px; }
       .toast-close:hover { opacity: 1; }
-      @keyframes toastIn  { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0);    opacity: 1; } }
-      @keyframes toastOut { from { transform: translateY(0);    opacity: 1; } to { transform: translateY(-8px); opacity: 0; } }
+      @keyframes toastIn  { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0);    opacity: 1; } }
+      @keyframes toastOut { from { transform: translateY(0);    opacity: 1; } to { transform: translateY(-6px); opacity: 0; } }
 
-      .btn-text { font-size: 11px; font-weight: 600; color: var(--muted); padding: 3px 8px; border-radius: var(--r-xs); transition: color 0.15s, background 0.15s; }
-      .btn-text:hover { color: var(--ink); background: var(--surface2); }
-      .btn-text.danger:hover { color: var(--red); background: var(--red-bg); }
+      /* Geist button-tertiary (text button) */
+      .btn-text { font-size: 13px; font-weight: 500; color: var(--gray-700); padding: 3px 8px; border-radius: var(--r-xs); transition: color 150ms, background 150ms; }
+      .btn-text:hover { color: var(--gray-1000); background: var(--gray-100); }
+      .btn-text.danger:hover { color: var(--red-700); background: var(--red-100); }
     </style>
   </head>
 
